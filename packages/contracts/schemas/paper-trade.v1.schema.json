@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/schemas/paper-trade.v1.schema.json",
+  "title": "PaperTrade",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "idempotency_key", "asset", "decision", "opened_at", "expires_at", "settled_at",
+    "reference_price", "settlement_price", "payout", "stake", "status", "pnl", "model_version"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string", "minLength": 1},
+    "asset": {"type": "string", "minLength": 1},
+    "decision": {"enum": ["CALL", "PUT"]},
+    "opened_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "settled_at": {"type": ["string", "null"], "format": "date-time"},
+    "reference_price": {"type": "number", "exclusiveMinimum": 0},
+    "settlement_price": {"type": ["number", "null"], "exclusiveMinimum": 0},
+    "payout": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+    "stake": {"type": "number", "exclusiveMinimum": 0},
+    "status": {"enum": ["open", "won", "lost", "push"]},
+    "pnl": {"type": ["number", "null"]},
+    "model_version": {"type": "string", "minLength": 1}
+  }
+}

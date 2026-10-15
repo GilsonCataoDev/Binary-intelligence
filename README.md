@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 7: notícias e contexto econômico auditáveis.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 8: paper trading e gestão de risco.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -33,7 +33,7 @@ npm run build
 npm run start
 ```
 
-Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":7}` apenas confirma que o esqueleto da API está ativo.
+Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":8}` apenas confirma que o esqueleto da API está ativo.
 
 ## Arquitetura nesta fase
 
@@ -50,7 +50,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 5. Baselines e backtesting: implementados com gap temporal, payout hipotético e métricas; veja `docs/BACKTESTING.md`.
 6. Modelos tabulares e calibração: regressão logística, floresta aleatória e boosting avaliados contra o baseline; veja `docs/ML_MODELS.md`.
 7. Notícias e eventos: contratos auditáveis, cobertura indisponível explícita e janelas de segurança; veja `docs/NEWS_CONTEXT.md`.
-8. Próxima fase: paper trading e gestão de risco independente.
+8. Paper trading e risco: decisão determinística, operações idempotentes e limites independentes; veja `docs/PAPER_TRADING_AND_RISK.md`.
+9. Próxima fase: API e dashboard.
 
 ## PostgreSQL local opcional
 
