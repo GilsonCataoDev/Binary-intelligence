@@ -1,12 +1,22 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
 import { PlatformStateService } from './platform-state.service';
+import { DerivPublicMarketService } from './market/deriv-public-market.service';
 
 @Controller('v1')
 export class PlatformController {
-  constructor(private readonly platform: PlatformStateService) {}
+  constructor(
+    private readonly platform: PlatformStateService,
+    private readonly market: DerivPublicMarketService,
+  ) {}
 
-  @Get('status') status(): object { return this.platform.status(); }
-  @Get('assets') assets(): object { return { assets: [], limitation: 'no authorized market provider configured' }; }
+  @Get('status') status(): Promise<object> { return this.platform.status(); }
+  @Get('assets') assets(): Promise<object> { return this.market.listAssets(); }
+  @Get('market/candles/:symbol') candles(@Param('symbol') symbol: string): Promise<object> {
+    return this.market.candles(symbol);
+  }
+  @Get('market/proposal/:symbol') proposal(@Param('symbol') symbol: string): Promise<object> {
+    return this.market.fiveMinuteProposal(symbol);
+  }
   @Get('predictions') predictions(): object { return { predictions: [], resultType: 'paper' }; }
   @Get('news') news(): object { return { availability: 'unavailable', events: [], limitation: 'no authorized news feed configured' }; }
   @Get('metrics') metrics(): object { return { paper: null, backtest: null, live: null }; }
@@ -17,13 +27,14 @@ export class PlatformController {
   @Get('integrations') integrations(): object {
     return {
       candidate: 'Deriv Options', officialApiDocumented: true,
-      publicDiscoveryReady: false, demoTradingReady: false, realTradingReady: false,
-      pending: ['app registration', 'account and regional eligibility', 'contract verification', 'demo integration tests'],
+      publicDiscoveryReady: true, demoTradingReady: false, realTradingReady: false,
+      dataMode: 'transient_read_only',
+      pending: ['app registration', 'account and regional eligibility', 'authenticated demo tests'],
     };
   }
   @Post('analysis/:asset') analyze(@Param('asset') asset: string): never { return this.platform.unavailableAnalysis(asset); }
-  @Post('control/start') start(): object { return this.platform.start(); }
-  @Post('control/pause') pause(): object { return this.platform.pause(); }
-  @Post('control/stop') stop(): object { return this.platform.stop(); }
-  @Post('control/emergency-stop') emergency(): object { return this.platform.emergency(); }
+  @Post('control/start') start(): Promise<object> { return this.platform.start(); }
+  @Post('control/pause') pause(): Promise<object> { return this.platform.pause(); }
+  @Post('control/stop') stop(): Promise<object> { return this.platform.stop(); }
+  @Post('control/emergency-stop') emergency(): Promise<object> { return this.platform.emergency(); }
 }
