@@ -4,13 +4,13 @@
 
 O módulo `news` normaliza eventos, registra a origem, preserva os horários de publicação, evento e ingestão, associa ativos, impacto informado e evidências. O contrato exige UTC e rejeita registros sem horário verificável.
 
-O `JsonNewsProvider` permite testes reproduzíveis com arquivos obtidos legalmente. Ele filtra informações que ainda não estavam publicadas ou ingeridas no momento analisado. O `UnavailableNewsProvider` representa explicitamente a ausência de cobertura. Nenhuma API externa ou notícia sintética foi adicionada.
+O `JsonNewsProvider` permite testes reproduzíveis com arquivos obtidos legalmente. O arquivo precisa declarar `coverage_start`, `coverage_end` e `events`; uma lista vazia sem cobertura declarada é marcada como degradada. O provedor filtra informações que ainda não estavam publicadas ou ingeridas no momento analisado. O `UnavailableNewsProvider` representa explicitamente a ausência de cobertura. Nenhuma API externa ou notícia sintética foi adicionada.
 
 ## Bloqueio de segurança
 
 O guardião determinístico bloqueia decisões em uma janela configurável, inicialmente 15 minutos antes e depois de eventos de alto impacto. Notícias não programadas só podem bloquear a partir de sua publicação; o sistema não presume conhecimento anterior.
 
-Por padrão, cobertura degradada ou indisponível também bloqueia. O resultado informa os identificadores dos eventos e os motivos, permitindo auditoria e futura integração com o motor de decisão.
+Por padrão, cobertura degradada, indisponível, futura ou com mais de cinco minutos também bloqueia. O resultado informa os identificadores dos eventos e os motivos, permitindo auditoria e futura integração com o motor de decisão.
 
 ## Persistência e retenção
 

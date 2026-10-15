@@ -54,7 +54,11 @@ def test_json_provider_filters_assets_window_and_information_time(tmp_path) -> N
         ingested_at=NOW + timedelta(minutes=1),
     )
     path = tmp_path / "events.json"
-    path.write_text(json.dumps([visible.model_dump(mode="json"), future_ingestion.model_dump(mode="json")]), encoding="utf-8")
+    path.write_text(json.dumps({
+        "coverage_start": (NOW - timedelta(minutes=5)).isoformat(),
+        "coverage_end": (NOW + timedelta(minutes=10)).isoformat(),
+        "events": [visible.model_dump(mode="json"), future_ingestion.model_dump(mode="json")],
+    }), encoding="utf-8")
     query = NewsQuery(assets=("EURUSD",), start=NOW - timedelta(minutes=5), end=NOW + timedelta(minutes=10))
 
     context = JsonNewsProvider(path).get_context(query, as_of=NOW)
@@ -62,10 +66,24 @@ def test_json_provider_filters_assets_window_and_information_time(tmp_path) -> N
     assert [event.source_event_id for event in context.events] == [visible.source_event_id]
 
 
+def test_json_provider_does_not_claim_undeclared_coverage(tmp_path) -> None:
+    path = tmp_path / "events.json"
+    path.write_text("[]", encoding="utf-8")
+    query = NewsQuery(assets=("EURUSD",), start=NOW, end=NOW + timedelta(minutes=1))
+
+    context = JsonNewsProvider(path).get_context(query, as_of=NOW)
+
+    assert context.availability == NewsAvailability.DEGRADED
+    assert evaluate_news_guard(context, asset="EURUSD", decision_time=NOW).blocked
+
+
 def test_guard_blocks_high_impact_window_and_missing_coverage() -> None:
-    context = NewsContext(availability=NewsAvailability.AVAILABLE, as_of=NOW, events=(make_event(),))
-    blocked = evaluate_news_guard(context, asset="eurusd", decision_time=NOW - timedelta(minutes=10))
-    clear = evaluate_news_guard(context, asset="EURUSD", decision_time=NOW - timedelta(minutes=16))
+    blocked_at = NOW - timedelta(minutes=10)
+    clear_at = NOW - timedelta(minutes=16)
+    blocked_context = NewsContext(availability=NewsAvailability.AVAILABLE, as_of=blocked_at, events=(make_event(),))
+    clear_context = NewsContext(availability=NewsAvailability.AVAILABLE, as_of=clear_at, events=(make_event(),))
+    blocked = evaluate_news_guard(blocked_context, asset="eurusd", decision_time=blocked_at)
+    clear = evaluate_news_guard(clear_context, asset="EURUSD", decision_time=clear_at)
     unavailable = UnavailableNewsProvider("no authorized feed configured").get_context(
         NewsQuery(assets=("EURUSD",), start=NOW, end=NOW + timedelta(minutes=1)), as_of=NOW
     )
@@ -77,8 +95,30 @@ def test_guard_blocks_high_impact_window_and_missing_coverage() -> None:
 
 def test_breaking_news_never_blocks_before_publication() -> None:
     event = make_event(event_at=None, published_at=NOW, ingested_at=NOW)
+    before = NOW - timedelta(seconds=1)
+    before_context = NewsContext(availability=NewsAvailability.AVAILABLE, as_of=before, events=())
     context = NewsContext(availability=NewsAvailability.AVAILABLE, as_of=NOW, events=(event,))
     config = EventBlackoutConfig(minutes_after=10)
 
-    assert not evaluate_news_guard(context, asset="EURUSD", decision_time=NOW - timedelta(seconds=1), config=config).blocked
+    assert not evaluate_news_guard(before_context, asset="EURUSD", decision_time=before, config=config).blocked
     assert evaluate_news_guard(context, asset="EURUSD", decision_time=NOW, config=config).blocked
+
+
+def test_context_rejects_future_information_and_guard_blocks_staleness() -> None:
+    with pytest.raises(ValidationError):
+        NewsContext(
+            availability=NewsAvailability.AVAILABLE,
+            as_of=NOW,
+            events=(make_event(source_event_id="future", ingested_at=NOW + timedelta(seconds=1)),),
+        )
+    stale = NewsContext(availability=NewsAvailability.AVAILABLE, as_of=NOW, events=())
+    assert evaluate_news_guard(
+        stale, asset="EURUSD", decision_time=NOW + timedelta(minutes=6)
+    ).blocked
+
+
+def test_audit_text_cannot_be_whitespace() -> None:
+    with pytest.raises(ValidationError):
+        make_event(source="   ")
+    with pytest.raises(ValidationError):
+        make_event(evidence=("   ",))

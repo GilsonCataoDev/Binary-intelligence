@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict
@@ -17,15 +18,14 @@ class PromotionCriteria:
     maximum_expected_calibration_error: float = 0.08
     minimum_fold_win_rate: float = 0.6
     require_hit_rate_ci_above_break_even: bool = True
-    require_untouched_holdout: bool = True
 
 
 class PromotionAssessment(BaseModel):
     model_config = ConfigDict(frozen=True)
     baseline: str
     candidate: str
-    approved: bool
-    holdout_confirmed: bool
+    approved: Literal[False]
+    holdout_confirmed: Literal[False]
     brier_improvement: float | None
     fold_win_rate: float | None
     expected_calibration_error: float | None
@@ -36,10 +36,11 @@ def assess_candidate(
     baseline: BacktestRun,
     candidate: BacktestRun,
     criteria: PromotionCriteria = PromotionCriteria(),
-    *,
-    holdout_confirmed: bool = False,
 ) -> PromotionAssessment:
     reasons: list[str] = []
+    mismatch = _comparison_mismatch(baseline, candidate)
+    if mismatch:
+        reasons.append(f"candidate and baseline are not comparable: {mismatch}")
     baseline_metrics = baseline.report.metrics
     candidate_metrics = candidate.report.metrics
     brier_improvement = None
@@ -72,14 +73,13 @@ def assess_candidate(
         threshold = break_even_probability(candidate.report.payout)
         if interval is None or interval[0] <= threshold:
             reasons.append("hit-rate confidence interval does not clear break-even")
-    if criteria.require_untouched_holdout and not holdout_confirmed:
-        reasons.append("untouched holdout evaluation has not been confirmed")
+    reasons.append("untouched holdout evaluation pipeline has not been implemented")
 
     return PromotionAssessment(
         baseline=baseline.report.strategy,
         candidate=candidate.report.strategy,
         approved=not reasons,
-        holdout_confirmed=holdout_confirmed,
+        holdout_confirmed=False,
         brier_improvement=brier_improvement,
         fold_win_rate=fold_win_rate,
         expected_calibration_error=expected_calibration_error,
@@ -112,3 +112,24 @@ def _fold_win_rate(baseline: BacktestRun, candidate: BacktestRun) -> float | Non
         candidate_brier = np.mean((resolved["probability_up_candidate"].to_numpy() - actual) ** 2)
         wins.append(candidate_brier < base_brier)
     return sum(wins) / len(wins) if wins else None
+
+
+def _comparison_mismatch(baseline: BacktestRun, candidate: BacktestRun) -> str | None:
+    fields = (
+        "data_source", "asset", "timeframe", "horizon_steps", "entry_delay_steps",
+        "execution_offset_bps", "tie_tolerance", "minimum_train_size", "test_size",
+        "gap", "folds", "payout", "payout_is_hypothetical", "tie_policy",
+    )
+    for field in fields:
+        if getattr(baseline.report, field) != getattr(candidate.report, field):
+            return f"report field {field} differs"
+
+    identity = [
+        "timestamp", "settled_at", "analysis_price", "reference_price",
+        "settlement_price", "outcome", "market_regime", "fold",
+    ]
+    baseline_records = baseline.records.loc[:, identity].sort_values("timestamp").reset_index(drop=True)
+    candidate_records = candidate.records.loc[:, identity].sort_values("timestamp").reset_index(drop=True)
+    if not baseline_records.equals(candidate_records):
+        return "out-of-sample observations differ"
+    return None

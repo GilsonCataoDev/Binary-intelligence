@@ -14,6 +14,7 @@ class EventBlackoutConfig(BaseModel):
     minutes_after: int = Field(default=15, ge=0, le=1440)
     blocked_impacts: frozenset[EconomicImpact] = frozenset({EconomicImpact.HIGH})
     block_when_unavailable: bool = True
+    maximum_context_age_seconds: int = Field(default=300, ge=0, le=86400)
 
 
 class NewsGuardResult(BaseModel):
@@ -34,6 +35,10 @@ def evaluate_news_guard(
     decision_time = _utc(decision_time)
     reasons: list[str] = []
     blocking_ids: list[str] = []
+    if context.as_of > decision_time:
+        reasons.append("news context contains information from after the decision time")
+    elif (decision_time - context.as_of).total_seconds() > config.maximum_context_age_seconds:
+        reasons.append("news context is stale for the decision time")
     if context.availability != NewsAvailability.AVAILABLE and config.block_when_unavailable:
         reasons.append(f"news context is {context.availability.value}: {context.limitation}")
 

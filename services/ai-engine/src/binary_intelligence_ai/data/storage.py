@@ -203,9 +203,11 @@ class NewsEventRepository:
         self.session.commit()
         return inserted
 
-    def list_relevant(self, *, asset: str, start: datetime, end: datetime) -> list[NewsEventRecord]:
+    def list_relevant(
+        self, *, asset: str, start: datetime, end: datetime, as_of: datetime
+    ) -> list[NewsEventRecord]:
         records = self.session.scalars(select(NewsEventRecord).where(
-            NewsEventRecord.ingested_at <= end,
+            NewsEventRecord.ingested_at <= as_of,
         ).order_by(NewsEventRecord.ingested_at)).all()
         normalized_asset = asset.strip().upper()
         return [

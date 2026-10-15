@@ -23,7 +23,15 @@ class JsonNewsProvider(NewsProvider):
     def get_context(self, query: NewsQuery, *, as_of: datetime) -> NewsContext:
         as_of = _utc(as_of)
         payload = json.loads(self.path.read_text(encoding="utf-8"))
-        events = tuple(NewsEvent.model_validate(item) for item in payload)
+        if not isinstance(payload, dict) or not {"coverage_start", "coverage_end", "events"} <= payload.keys():
+            return NewsContext(
+                availability=NewsAvailability.DEGRADED,
+                as_of=as_of,
+                limitation="fixture does not declare its coverage interval",
+            )
+        coverage_start = _utc(datetime.fromisoformat(str(payload["coverage_start"]).replace("Z", "+00:00")))
+        coverage_end = _utc(datetime.fromisoformat(str(payload["coverage_end"]).replace("Z", "+00:00")))
+        events = tuple(NewsEvent.model_validate(item) for item in payload["events"])
         selected = tuple(
             event for event in events
             if set(event.affected_assets) & set(query.assets)
@@ -31,6 +39,13 @@ class JsonNewsProvider(NewsProvider):
             and (event.published_at is None or event.published_at <= as_of)
             and event.ingested_at <= as_of
         )
+        if coverage_start > query.start or coverage_end < query.end:
+            return NewsContext(
+                availability=NewsAvailability.DEGRADED,
+                as_of=as_of,
+                events=selected,
+                limitation="fixture does not cover the complete requested interval",
+            )
         return NewsContext(availability=NewsAvailability.AVAILABLE, as_of=as_of, events=selected)
 
 

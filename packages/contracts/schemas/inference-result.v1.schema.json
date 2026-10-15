@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/schemas/inference-result.v1.schema.json",
+  "title": "InferenceResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version", "asset", "timestamp", "market_regime", "horizon_seconds",
+    "decision", "probability_up", "probability_down", "confidence_calibrated",
+    "expected_value", "payout", "reasons", "data_quality", "model_version",
+    "feature_set_version"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "pattern": "^1\\."},
+    "asset": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "market_regime": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "horizon_seconds": {"type": "integer", "exclusiveMinimum": 0},
+    "decision": {"enum": ["CALL", "PUT", "ABSTAIN"]},
+    "probability_up": {"type": "number", "minimum": 0, "maximum": 1},
+    "probability_down": {"type": "number", "minimum": 0, "maximum": 1},
+    "confidence_calibrated": {"type": "boolean"},
+    "expected_value": {"type": ["number", "null"]},
+    "payout": {"type": ["number", "null"], "exclusiveMinimum": 0, "maximum": 1},
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}},
+    "data_quality": {"enum": ["valid", "invalid", "stale"]},
+    "model_version": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "feature_set_version": {"type": "string", "minLength": 1, "pattern": "\\S"}
+  }
+}

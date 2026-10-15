@@ -25,4 +25,4 @@ O relatório inclui operações, abstenções, acertos, erros, empates, retorno 
 
 O `BacktestRepository` persiste a configuração, métricas e cada previsão fora da amostra. Isso permite reconstruir o resultado sem misturá-lo com paper trading ou operações reais.
 
-Sem histórico de propostas da plataforma, o payout é **hipotético**. O retorno do backtest não representa paper trading, execução real nem expectativa de lucro futuro. Divergência entre o feed analisado e o preço de liquidação continua sem medição.
+Sem histórico de propostas da plataforma, o payout é **hipotético e constante por execução**. A sensibilidade a três payouts não reproduz uma série histórica variável. O retorno do backtest não representa paper trading, execução real nem expectativa de lucro futuro. Divergência entre o feed analisado e o preço de liquidação continua sem medição.

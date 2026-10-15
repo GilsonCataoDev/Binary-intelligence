@@ -34,10 +34,20 @@ class NewsEvent(BaseModel):
     delayed: bool
     evidence: tuple[str, ...] = Field(min_length=1)
 
-    @field_validator("source", "source_event_id", "headline", "event_type")
+    @field_validator("source", "source_event_id", "headline", "event_type", mode="before")
     @classmethod
-    def strip_text(cls, value: str) -> str:
-        return value.strip()
+    def strip_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def normalize_evidence(cls, value: object) -> object:
+        if not isinstance(value, (list, tuple)):
+            return value
+        normalized = tuple(item.strip() if isinstance(item, str) else item for item in value)
+        if any(not isinstance(item, str) or not item for item in normalized):
+            raise ValueError("evidence entries must be non-empty strings")
+        return normalized
 
     @field_validator("affected_assets")
     @classmethod
@@ -114,4 +124,9 @@ class NewsContext(BaseModel):
     def explain_missing_coverage(self) -> NewsContext:
         if self.availability != NewsAvailability.AVAILABLE and not self.limitation:
             raise ValueError("degraded or unavailable context requires a limitation")
+        for event in self.events:
+            if event.ingested_at > self.as_of:
+                raise ValueError("context cannot contain events ingested after as_of")
+            if event.published_at is not None and event.published_at > self.as_of:
+                raise ValueError("context cannot contain news published after as_of")
         return self

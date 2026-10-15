@@ -62,4 +62,23 @@ def test_promotion_is_an_explicit_assessment_against_frequency_baseline() -> Non
     assert assessment.candidate == "logistic-test"
     assert assessment.approved is False
     assert assessment.holdout_confirmed is False
-    assert "untouched holdout evaluation has not been confirmed" in assessment.reasons
+    assert "untouched holdout evaluation pipeline has not been implemented" in assessment.reasons
+
+
+def test_promotion_rejects_runs_with_different_evaluation_configuration() -> None:
+    candles = _candles()
+    baseline = compare_baselines(candles, _config())["frequency"]
+    different = BacktestConfig(
+        payout=0.7,
+        walk_forward=WalkForwardConfig(minimum_train_size=500, test_size=100, gap=5),
+    )
+    candidate = evaluate_model_candidates(
+        candles,
+        backtest=different,
+        evaluation=ModelEvaluationConfig(candidates=(CandidateSpec(CandidateKind.LOGISTIC, "logistic-test"),)),
+    )["logistic-test"]
+
+    assessment = assess_candidate(baseline, candidate)
+
+    assert not assessment.approved
+    assert any("payout differs" in reason for reason in assessment.reasons)

@@ -8,8 +8,8 @@
   "properties": {
     "baseline": { "type": "string", "minLength": 1 },
     "candidate": { "type": "string", "minLength": 1 },
-    "approved": { "type": "boolean" },
-    "holdout_confirmed": { "type": "boolean" },
+    "approved": { "const": false },
+    "holdout_confirmed": { "const": false },
     "brier_improvement": { "type": ["number", "null"] },
     "fold_win_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
     "expected_calibration_error": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },

@@ -2,8 +2,9 @@
 
 from .baselines import Decision, FrequencyBaseline, TechnicalRuleBaseline
 from .candidates import CandidateKind, CandidateSpec, CalibratedCandidate, MODEL_FEATURES
+from .inference import InferenceResult
 
 __all__ = [
     "Decision", "FrequencyBaseline", "TechnicalRuleBaseline", "CandidateKind",
-    "CandidateSpec", "CalibratedCandidate", "MODEL_FEATURES",
+    "CandidateSpec", "CalibratedCandidate", "InferenceResult", "MODEL_FEATURES",
 ]

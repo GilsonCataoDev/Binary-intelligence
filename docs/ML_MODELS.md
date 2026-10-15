@@ -10,9 +10,11 @@ Todos usam o conjunto `technical-v1`. Redes neurais não foram incluídas porque
 
 ## Separação e calibração
 
-Em cada fold walk-forward, o período de treino é novamente dividido em treino-base, gap de cinco candles e calibração posterior. Imputação, escala e modelo são ajustados somente no treino-base. Uma regressão logística de Platt calibra as probabilidades no período seguinte. O teste externo permanece intocado até a inferência.
+Em cada fold walk-forward, o período de treino é novamente dividido em treino-base, gap igual ao horizonte mais o atraso de entrada e calibração posterior. Imputação, escala e modelo são ajustados somente no treino-base. Uma regressão logística de Platt calibra as probabilidades no período seguinte. O teste externo permanece intocado até a inferência.
 
 Empates são preservados no backtest e tratados pela regra configurada, mas não entram no ajuste binário de alta/baixa. Nenhum resultado é usado antes de sua liquidação.
+
+`InferenceResult` define a fronteira auditável com probabilidades de alta e baixa, indicação de calibração, decisão, motivos, qualidade dos dados e versões do modelo e das features. A Fase 8 conectará esse contrato às regras completas de notícias, payout e risco.
 
 ## Decisão e promoção
 
@@ -29,4 +31,6 @@ Um candidato só é aprovado quando cumpre simultaneamente:
 
 Os critérios são conservadores e versionados no código. Aprovação estatística de um candidato não habilita execução real e não autoriza alteração de risco.
 
-Como comparar vários candidatos no mesmo histórico introduz viés de seleção, `approved` permanece falso até que uma avaliação em holdout intocado seja explicitamente confirmada. O holdout deve ser separado antes de ajustar hiperparâmetros ou escolher o modelo.
+Como comparar vários candidatos no mesmo histórico introduz viés de seleção, `approved` permanece sempre falso nesta fase. Um booleano fornecido pelo chamador não é aceito como prova de holdout. A Fase 10 deverá criar o holdout antes do ajuste, registrar sua identidade e produzir a evidência de avaliação para habilitar promoção.
+
+Baseline e candidato também precisam ter fonte, ativo, período, payout, regra de liquidação e observações fora da amostra idênticos. A avaliação rejeita comparações incompatíveis.

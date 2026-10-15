@@ -73,6 +73,7 @@ def test_news_repository_is_idempotent_and_queries_asset_window() -> None:
             asset="eurusd",
             start=NOW - timedelta(minutes=1),
             end=NOW + timedelta(minutes=1),
+            as_of=NOW,
         )
         assert len(records) == 1
         assert records[0].source_event_id == event.source_event_id
