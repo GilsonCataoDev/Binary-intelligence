@@ -66,6 +66,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 11. Integração oficial: Deriv Options avaliada documentalmente, gateway simulado criado e execução real bloqueada; veja `docs/DERIV_INTEGRATION_EVALUATION.md`.
 12. Segurança e viabilidade: controles locais reforçados e automação real classificada como **NO-GO**; veja `docs/SECURITY_AND_AUTOMATION_REVIEW.md`.
 
+13. Teste de viabilidade com dados públicos reais da Deriv, em memória: nenhuma vantagem estatística; EUR/USD de 5 minutos não é oferecido; veja `docs/VIABILITY_TEST.md`.
+
 ## Conclusão do roteiro
 
 O motor, backtesting, modelos, paper trading, API e dashboard formam um protótipo local verificável. O projeto não cumpre os requisitos para dinheiro real: faltam direitos de dados, validação autenticada, reconciliação, infraestrutura de produção e evidência de benefício econômico.
