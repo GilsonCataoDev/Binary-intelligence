@@ -9,7 +9,7 @@ services:
       - "127.0.0.1:55432:5432"
     volumes:
       - binary_ai_postgres:/var/lib/postgresql/data
-      - ./postgres/001_market_data.sql:/docker-entrypoint-initdb.d/001_market_data.sql:ro
+      - ./postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U binary_ai -d binary_intelligence_ai"]
       interval: 5s

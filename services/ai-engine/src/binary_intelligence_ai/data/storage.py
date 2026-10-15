@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
+import math
+from typing import Any, Mapping
+from uuid import uuid4
 
-from sqlalchemy import DateTime, Integer, Numeric, String, UniqueConstraint, select
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from .contracts import Candle, Timeframe
@@ -29,6 +32,37 @@ class CandleRecord(Base):
     close: Mapped[Decimal] = mapped_column(Numeric(28, 12), nullable=False)
     volume: Mapped[Decimal | None] = mapped_column(Numeric(28, 12), nullable=True)
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class BacktestRunRecord(Base):
+    __tablename__ = "backtest_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    strategy: Mapped[str] = mapped_column(String(80), nullable=False)
+    data_source: Mapped[str] = mapped_column(String(80), nullable=False)
+    asset: Mapped[str] = mapped_column(String(40), nullable=False)
+    timeframe: Mapped[str] = mapped_column(String(8), nullable=False)
+    config_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    metrics_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class BacktestPredictionRecord(Base):
+    __tablename__ = "backtest_predictions"
+    __table_args__ = (UniqueConstraint("run_id", "timestamp"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("backtest_runs.id", ondelete="CASCADE"), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    settled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    analysis_price: Mapped[Decimal] = mapped_column(Numeric(28, 12), nullable=False)
+    reference_price: Mapped[Decimal] = mapped_column(Numeric(28, 12), nullable=False)
+    settlement_price: Mapped[Decimal] = mapped_column(Numeric(28, 12), nullable=False)
+    outcome: Mapped[str] = mapped_column(String(8), nullable=False)
+    probability_up: Mapped[Decimal | None] = mapped_column(Numeric(18, 12), nullable=True)
+    decision: Mapped[str] = mapped_column(String(8), nullable=False)
+    market_regime: Mapped[str] = mapped_column(String(24), nullable=False)
+    fold: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class CandleRepository:
@@ -74,3 +108,52 @@ class CandleRepository:
             CandleRecord.open_time < end,
         ).order_by(CandleRecord.open_time)
         return list(self.session.scalars(statement))
+
+
+class BacktestRepository:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def save(self, report: Mapping[str, Any], predictions: list[Mapping[str, Any]]) -> str:
+        run_id = str(uuid4())
+        config_keys = {
+            "horizon_steps", "entry_delay_steps", "execution_offset_bps", "tie_tolerance",
+            "minimum_train_size", "test_size", "gap",
+            "folds", "payout", "payout_is_hypothetical", "tie_policy",
+        }
+        self.session.add(BacktestRunRecord(
+            id=run_id,
+            created_at=datetime.now(timezone.utc),
+            strategy=str(report["strategy"]),
+            data_source=str(report["data_source"]),
+            asset=str(report["asset"]),
+            timeframe=str(report["timeframe"]),
+            config_json={key: report[key] for key in config_keys},
+            metrics_json=dict(report["metrics"]),
+        ))
+        for prediction in predictions:
+            probability = prediction.get("probability_up")
+            if isinstance(probability, float) and math.isnan(probability):
+                probability = None
+            self.session.add(BacktestPredictionRecord(
+                run_id=run_id,
+                timestamp=_as_datetime(prediction["timestamp"]),
+                settled_at=_as_datetime(prediction["settled_at"]),
+                analysis_price=Decimal(str(prediction["analysis_price"])),
+                reference_price=Decimal(str(prediction["reference_price"])),
+                settlement_price=Decimal(str(prediction["settlement_price"])),
+                outcome=str(prediction["outcome"]),
+                probability_up=Decimal(str(probability)) if probability is not None else None,
+                decision=str(prediction["decision"]),
+                market_regime=str(prediction["market_regime"]),
+                fold=int(prediction["fold"]),
+            ))
+        self.session.commit()
+        return run_id
+
+
+def _as_datetime(value: Any) -> datetime:
+    converted = value.to_pydatetime() if hasattr(value, "to_pydatetime") else value
+    if not isinstance(converted, datetime):
+        raise TypeError("prediction timestamp must be a datetime")
+    return converted

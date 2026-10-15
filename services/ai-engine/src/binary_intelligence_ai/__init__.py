@@ -1,3 +1,3 @@
 """Motor quantitativo experimental; sem conectores ou sinais nesta fase."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

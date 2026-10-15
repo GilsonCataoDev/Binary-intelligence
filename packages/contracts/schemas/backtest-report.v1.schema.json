@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/backtest-report.v1.schema.json",
+  "title": "BacktestReportV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["strategy", "data_source", "asset", "timeframe", "horizon_steps", "entry_delay_steps", "execution_offset_bps", "tie_tolerance", "minimum_train_size", "test_size", "gap", "folds", "payout", "payout_is_hypothetical", "tie_policy", "metrics"],
+  "properties": {
+    "strategy": { "type": "string", "minLength": 1 },
+    "data_source": { "type": "string", "minLength": 1 },
+    "asset": { "type": "string", "minLength": 1 },
+    "timeframe": { "enum": ["1m", "5m"] },
+    "horizon_steps": { "type": "integer", "minimum": 1 },
+    "entry_delay_steps": { "type": "integer", "minimum": 0 },
+    "execution_offset_bps": { "type": "number" },
+    "tie_tolerance": { "type": "number", "minimum": 0 },
+    "minimum_train_size": { "type": "integer", "minimum": 1 },
+    "test_size": { "type": "integer", "minimum": 1 },
+    "gap": { "type": "integer", "minimum": 0 },
+    "folds": { "type": "integer", "minimum": 1 },
+    "payout": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "payout_is_hypothetical": { "const": true },
+    "tie_policy": { "enum": ["push", "loss"] },
+    "metrics": { "type": "object" }
+  }
+}
