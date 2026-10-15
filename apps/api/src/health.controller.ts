@@ -1,9 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
+import { Public } from './auth/public.decorator';
 
 @Controller('health')
 export class HealthController {
   @Get()
-  getHealth(): { status: 'ok'; phase: 8 } {
-    return { status: 'ok', phase: 8 };
+  @Public()
+  getHealth(): object {
+    return {
+      status: 'degraded', phase: 9, api: 'ok', marketData: 'not_configured',
+      aiEngine: 'contract_only', execution: 'disabled',
+    };
   }
 }

@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 8: paper trading e gestão de risco.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 9: API e dashboard locais.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -33,11 +33,21 @@ npm run build
 npm run start
 ```
 
-Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":8}` apenas confirma que o esqueleto da API está ativo.
+Defina `API_KEY` conforme `.env.example`. Em outro terminal, `Invoke-RestMethod http://127.0.0.1:3000/api/health` confirma a API; os endpoints `/api/v1` exigem o cabeçalho `x-api-key`.
+
+## Executar o dashboard
+
+```powershell
+cd apps/dashboard
+npm ci
+npm run dev
+```
+
+Abra `http://127.0.0.1:5173`; veja `docs/API_AND_DASHBOARD.md`.
 
 ## Arquitetura nesta fase
 
-`services/ai-engine` contém contratos, validação, indicadores, regimes, backtesting, modelos calibrados e contexto de notícias. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém esquemas JSON versionados. PostgreSQL mantém dados, eventos, execuções de backtest e previsões auditáveis.
+`services/ai-engine` contém o motor quantitativo e de risco. `apps/api` expõe controle e consultas sem duplicar cálculos. `apps/dashboard` é o painel React. `packages/contracts` contém esquemas JSON versionados. PostgreSQL mantém dados e resultados auditáveis.
 
 O arquivo `.env.example` documenta futuras configurações; não contém credenciais ativas. Qualquer execução real permanece fora desta implementação.
 
@@ -51,7 +61,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 6. Modelos tabulares e calibração: regressão logística, floresta aleatória e boosting avaliados contra o baseline; veja `docs/ML_MODELS.md`.
 7. Notícias e eventos: contratos auditáveis, cobertura indisponível explícita e janelas de segurança; veja `docs/NEWS_CONTEXT.md`.
 8. Paper trading e risco: decisão determinística, operações idempotentes e limites independentes; veja `docs/PAPER_TRADING_AND_RISK.md`.
-9. Próxima fase: API e dashboard.
+9. API e dashboard: endpoints autenticados, estado seguro, logs e painel local; veja `docs/API_AND_DASHBOARD.md`.
+10. Próxima fase: monitoramento, testes de falhas e documentação operacional.
 
 ## PostgreSQL local opcional
 
