@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: binary_ai
       POSTGRES_PASSWORD: local_development_only
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:55432:5432"
     volumes:
       - binary_ai_postgres:/var/lib/postgresql/data
       - ./postgres/001_market_data.sql:/docker-entrypoint-initdb.d/001_market_data.sql:ro

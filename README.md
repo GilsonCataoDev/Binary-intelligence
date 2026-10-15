@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 3: contratos, validação e persistência de dados.** Nenhuma fonte ao vivo, previsão, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 4: indicadores e classificação de regimes.** Nenhuma fonte ao vivo, previsão, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -31,11 +31,11 @@ npm run build
 npm run start
 ```
 
-Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":2}` apenas confirma que o esqueleto da API está ativo.
+Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":4}` apenas confirma que o esqueleto da API está ativo.
 
 ## Arquitetura nesta fase
 
-`services/ai-engine` contém os contratos Pydantic, validadores, provedores CSV/simulado e repositório SQLAlchemy. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém os esquemas JSON versionados. `docs` registra a pesquisa, convenções e limites de uso. O painel entra em fase posterior.
+`services/ai-engine` contém contratos, validadores, provedores, persistência, indicadores causais e classificação de mercado. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém os esquemas JSON versionados. `docs` registra decisões e limites. O painel entra em fase posterior.
 
 O arquivo `.env.example` documenta futuras configurações; não contém credenciais ativas. Qualquer execução real permanece fora desta implementação.
 
@@ -44,7 +44,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 1. Pesquisa de plataformas: documentação inicial concluída, com verificações contratuais pendentes.
 2. Estrutura e ambientes: verificados localmente com importação do pacote, compilação da API e resposta HTTP de saúde.
 3. Contratos, validação e persistência: implementados para dados CSV/simulados; veja `docs/DATA_CONTRACTS.md`.
-4. Próxima fase: indicadores técnicos e classificação de regimes, usando somente candles encerrados e validados.
+4. Indicadores e regimes: implementados com teste de ausência de vazamento temporal; veja `docs/MARKET_ANALYSIS.md`.
+5. Próxima fase: baselines, rótulos de expiração e backtesting walk-forward.
 
 ## PostgreSQL local opcional
 

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/market-state.v1.schema.json",
+  "title": "MarketStateV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["asset", "timeframe", "as_of", "regime", "volatility", "trend_strength", "previous_regime", "regime_changed", "reasons"],
+  "properties": {
+    "asset": { "type": "string", "minLength": 1 },
+    "timeframe": { "enum": ["1m", "5m"] },
+    "as_of": { "type": "string", "format": "date-time" },
+    "regime": { "enum": ["trending_up", "trending_down", "ranging", "insufficient_data"] },
+    "volatility": { "enum": ["low", "normal", "high", "insufficient_data"] },
+    "trend_strength": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+    "previous_regime": {
+      "type": ["string", "null"],
+      "enum": ["trending_up", "trending_down", "ranging", "insufficient_data", null]
+    },
+    "regime_changed": { "type": "boolean" },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}
