@@ -1,4 +1,4 @@
-# Modelos tabulares e calibração — Fase 6
+# Modelos tabulares, holdout e promoção — Fases 6 e 10
 
 ## Candidatos
 
@@ -14,7 +14,7 @@ Em cada fold walk-forward, o período de treino é novamente dividido em treino-
 
 Empates são preservados no backtest e tratados pela regra configurada, mas não entram no ajuste binário de alta/baixa. Nenhum resultado é usado antes de sua liquidação.
 
-`InferenceResult` define a fronteira auditável com probabilidades de alta e baixa, indicação de calibração, decisão, motivos, qualidade dos dados e versões do modelo e das features. A Fase 8 conectará esse contrato às regras completas de notícias, payout e risco.
+`InferenceResult` define a fronteira auditável com probabilidades de alta e baixa, indicação de calibração, decisão, motivos, qualidade dos dados e versões do modelo e das features.
 
 ## Decisão e promoção
 
@@ -31,6 +31,8 @@ Um candidato só é aprovado quando cumpre simultaneamente:
 
 Os critérios são conservadores e versionados no código. Aprovação estatística de um candidato não habilita execução real e não autoriza alteração de risco.
 
-Como comparar vários candidatos no mesmo histórico introduz viés de seleção, `approved` permanece sempre falso nesta fase. Um booleano fornecido pelo chamador não é aceito como prova de holdout. A Fase 10 deverá criar o holdout antes do ajuste, registrar sua identidade e produzir a evidência de avaliação para habilitar promoção.
+O holdout final é separado antes do ajuste, com gap temporal, e nunca participa do treino ou da calibração. A evidência registra SHA-256 do conjunto e das observações, versões, fim do treino, início do holdout e quantidade avaliada. A promoção só pode ficar aprovada quando essa evidência corresponde exatamente ao candidato e às observações comparadas.
+
+O registro guarda versão de features, identidade do dataset, checksum e localização do artefato, métricas e estado. Toda promoção e reversão produz evento auditável. Um modelo não pode promover a si próprio nem alterar limites de risco.
 
 Baseline e candidato também precisam ter fonte, ativo, período, payout, regra de liquidação e observações fora da amostra idênticos. A avaliação rejeita comparações incompatíveis.

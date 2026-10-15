@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/monitoring-assessment.v1.schema.json",
+  "title": "MonitoringAssessmentV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "should_pause", "feature_psi", "maximum_psi", "observations", "brier_score", "expected_calibration_error", "reasons"],
+  "properties": {
+    "status": { "enum": ["healthy", "warning", "blocked", "insufficient_data"] },
+    "should_pause": { "type": "boolean" },
+    "feature_psi": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0 } },
+    "maximum_psi": { "type": ["number", "null"], "minimum": 0 },
+    "observations": { "type": "integer", "minimum": 0 },
+    "brier_score": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "expected_calibration_error": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}

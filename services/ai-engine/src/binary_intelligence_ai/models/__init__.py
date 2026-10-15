@@ -1,4 +1,4 @@
-"""Modelos de referência, sem modelos candidatos da Fase 6."""
+"""Baselines, candidatos calibrados e contratos de inferência."""
 
 from .baselines import Decision, FrequencyBaseline, TechnicalRuleBaseline
 from .candidates import CandidateKind, CandidateSpec, CalibratedCandidate, MODEL_FEATURES

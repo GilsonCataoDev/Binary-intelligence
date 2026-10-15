@@ -4,7 +4,7 @@
 
 O modelo fornece probabilidades. O motor `decisions` recalcula a probabilidade de equilíbrio `1 / (1 + payout)` e o valor esperado. Uma operação só é aceita quando os dados são válidos, as probabilidades estão calibradas, o modelo está aprovado, o payout é atual, notícias e volatilidade permitem e todos os controles de risco aprovam.
 
-Como o pipeline formal de promoção será implementado na Fase 10, os modelos atuais não estão aprovados para operação. Os testes de paper trading usam decisões aprovadas construídas explicitamente como fixtures.
+O pipeline formal de promoção exige avaliação aprovada e evidência de holdout intocado. Nenhum dos modelos de demonstração é promovido automaticamente. Os testes de paper trading usam decisões aprovadas construídas explicitamente como fixtures.
 
 ## Controles independentes
 
@@ -20,7 +20,7 @@ As tabelas `paper_trades` e `risk_audit_events` armazenam operações e eventos 
 
 ## Limitações
 
-- O estado em memória será orquestrado e recuperado pela API na Fase 9.
+- O estado persistente é mantido no PostgreSQL; o estado em memória ainda exige restauração explícita pela orquestração ao reiniciar.
 - Não há modelo promovido nem payout ao vivo.
 - Retomada automática após limites de perda não foi habilitada.
 - Reconciliação externa pertence a uma futura integração oficial.

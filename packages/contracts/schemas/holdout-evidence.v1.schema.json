@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/holdout-evidence.v1.schema.json",
+  "title": "HoldoutEvidenceV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["dataset_fingerprint", "observation_fingerprint", "candidate_version", "baseline_version", "training_end", "holdout_start", "holdout_observations"],
+  "properties": {
+    "dataset_fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "observation_fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "candidate_version": { "type": "string", "minLength": 1 },
+    "baseline_version": { "type": "string", "minLength": 1 },
+    "training_end": { "type": "string", "format": "date-time" },
+    "holdout_start": { "type": "string", "format": "date-time" },
+    "holdout_observations": { "type": "integer", "minimum": 1 }
+  }
+}

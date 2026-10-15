@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from binary_intelligence_ai.backtesting.runner import BacktestRun
 from binary_intelligence_ai.models.baselines import break_even_probability
+from binary_intelligence_ai.models.holdout import HoldoutEvidence, records_fingerprint
 
 
 @dataclass(frozen=True)
@@ -24,8 +24,8 @@ class PromotionAssessment(BaseModel):
     model_config = ConfigDict(frozen=True)
     baseline: str
     candidate: str
-    approved: Literal[False]
-    holdout_confirmed: Literal[False]
+    approved: bool
+    holdout_confirmed: bool
     brier_improvement: float | None
     fold_win_rate: float | None
     expected_calibration_error: float | None
@@ -36,6 +36,8 @@ def assess_candidate(
     baseline: BacktestRun,
     candidate: BacktestRun,
     criteria: PromotionCriteria = PromotionCriteria(),
+    *,
+    holdout_evidence: HoldoutEvidence | None = None,
 ) -> PromotionAssessment:
     reasons: list[str] = []
     mismatch = _comparison_mismatch(baseline, candidate)
@@ -73,13 +75,15 @@ def assess_candidate(
         threshold = break_even_probability(candidate.report.payout)
         if interval is None or interval[0] <= threshold:
             reasons.append("hit-rate confidence interval does not clear break-even")
-    reasons.append("untouched holdout evaluation pipeline has not been implemented")
+    holdout_confirmed = _valid_holdout_evidence(baseline, candidate, holdout_evidence)
+    if not holdout_confirmed:
+        reasons.append("valid untouched holdout evidence is required")
 
     return PromotionAssessment(
         baseline=baseline.report.strategy,
         candidate=candidate.report.strategy,
         approved=not reasons,
-        holdout_confirmed=False,
+        holdout_confirmed=holdout_confirmed,
         brier_improvement=brier_improvement,
         fold_win_rate=fold_win_rate,
         expected_calibration_error=expected_calibration_error,
@@ -133,3 +137,17 @@ def _comparison_mismatch(baseline: BacktestRun, candidate: BacktestRun) -> str |
     if not baseline_records.equals(candidate_records):
         return "out-of-sample observations differ"
     return None
+
+
+def _valid_holdout_evidence(
+    baseline: BacktestRun, candidate: BacktestRun, evidence: HoldoutEvidence | None
+) -> bool:
+    if evidence is None:
+        return False
+    return (
+        evidence.candidate_version == candidate.report.strategy
+        and evidence.baseline_version == baseline.report.strategy
+        and evidence.training_end < evidence.holdout_start
+        and evidence.holdout_observations == len(candidate.records)
+        and evidence.observation_fingerprint == records_fingerprint(candidate.records)
+    )

@@ -12,6 +12,7 @@ from binary_intelligence_ai.models.candidates import (
     CandidateSpec,
 )
 from binary_intelligence_ai.models.evaluation import ModelEvaluationConfig, evaluate_model_candidates
+from binary_intelligence_ai.models.holdout import evaluate_untouched_holdout
 from binary_intelligence_ai.models.promotion import assess_candidate
 
 
@@ -62,7 +63,37 @@ def test_promotion_is_an_explicit_assessment_against_frequency_baseline() -> Non
     assert assessment.candidate == "logistic-test"
     assert assessment.approved is False
     assert assessment.holdout_confirmed is False
-    assert "untouched holdout evaluation pipeline has not been implemented" in assessment.reasons
+    assert "valid untouched holdout evidence is required" in assessment.reasons
+
+
+def test_untouched_holdout_produces_verifiable_evidence() -> None:
+    evaluation = evaluate_untouched_holdout(
+        _candles(1000),
+        candidate_spec=CandidateSpec(CandidateKind.LOGISTIC, "logistic-holdout-v1"),
+        backtest=_config(),
+    )
+
+    assessment = assess_candidate(
+        evaluation.baseline, evaluation.candidate, holdout_evidence=evaluation.evidence
+    )
+
+    assert assessment.holdout_confirmed
+    assert evaluation.evidence.training_end < evaluation.evidence.holdout_start
+    assert evaluation.evidence.holdout_observations == len(evaluation.candidate.records)
+
+
+def test_tampered_holdout_evidence_is_rejected() -> None:
+    evaluation = evaluate_untouched_holdout(
+        _candles(1000),
+        candidate_spec=CandidateSpec(CandidateKind.LOGISTIC, "logistic-holdout-v1"),
+        backtest=_config(),
+    )
+    tampered = evaluation.evidence.model_copy(update={"observation_fingerprint": "0" * 64})
+
+    assessment = assess_candidate(evaluation.baseline, evaluation.candidate, holdout_evidence=tampered)
+
+    assert not assessment.holdout_confirmed
+    assert not assessment.approved
 
 
 def test_promotion_rejects_runs_with_different_evaluation_configuration() -> None:

@@ -13,5 +13,7 @@ dist/
 .env.*
 !.env.example
 *.log
+*.dump
+*.joblib
 .DS_Store
 Thumbs.db

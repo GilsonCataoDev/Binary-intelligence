@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/model-version.v1.schema.json",
+  "title": "ModelVersionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "feature_set_version", "dataset_fingerprint", "artifact_uri", "artifact_checksum", "created_at", "status", "metrics"],
+  "properties": {
+    "version": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "feature_set_version": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "dataset_fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "artifact_uri": { "type": "string", "minLength": 1 },
+    "artifact_checksum": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["candidate", "active", "retired", "paused", "rolled_back"] },
+    "metrics": { "type": "object", "additionalProperties": { "type": "number" } }
+  }
+}

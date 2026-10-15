@@ -18,7 +18,8 @@ def test_postgres_migration_created_market_candles() -> None:
     tables = set(inspect(engine).get_table_names())
     assert {
         "market_candles", "backtest_runs", "backtest_predictions", "news_events",
-        "paper_trades", "risk_audit_events",
+        "paper_trades", "risk_audit_events", "model_versions", "model_events",
+        "monitoring_assessments",
     } <= tables
     prediction_columns = {column["name"] for column in inspect(engine).get_columns("backtest_predictions")}
     assert "analysis_price" in prediction_columns

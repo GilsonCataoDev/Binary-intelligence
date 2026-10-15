@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 9: API e dashboard locais.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 10: monitoramento e resiliência.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -62,7 +62,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 7. Notícias e eventos: contratos auditáveis, cobertura indisponível explícita e janelas de segurança; veja `docs/NEWS_CONTEXT.md`.
 8. Paper trading e risco: decisão determinística, operações idempotentes e limites independentes; veja `docs/PAPER_TRADING_AND_RISK.md`.
 9. API e dashboard: endpoints autenticados, estado seguro, logs e painel local; veja `docs/API_AND_DASHBOARD.md`.
-10. Próxima fase: monitoramento, testes de falhas e documentação operacional.
+10. Monitoramento e resiliência: holdout identificável, registro, rollback, drift, bloqueio por degradação e runbook; veja `docs/OPERATIONS_AND_MONITORING.md`.
+11. Próxima fase: integração controlada de provedores externos e execução contínua em simulação.
 
 ## PostgreSQL local opcional
 
@@ -72,4 +73,4 @@ docker compose up -d
 docker compose ps
 ```
 
-O banco local aplica `postgres/001_market_data.sql` apenas na primeira criação do volume. Os testes automatizados usam banco temporário em memória e não exigem Docker.
+O banco local aplica os arquivos de `postgres/` em ordem apenas na primeira criação do volume. Em volume existente, aplique migrações novas conforme o runbook. Os testes unitários não exigem Docker; o teste integrado exige a URL PostgreSQL.
