@@ -3,12 +3,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { loadSecurityConfiguration } from './security/config';
 
 async function bootstrap(): Promise<void> {
+  const security = loadSecurityConfiguration();
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
-  app.enableCors({ origin: process.env.DASHBOARD_ORIGIN ?? 'http://127.0.0.1:5173' });
+  app.enableCors({ origin: security.dashboardOrigin });
   app.setGlobalPrefix('api');
   const port = Number(process.env.APP_PORT ?? 3000);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {

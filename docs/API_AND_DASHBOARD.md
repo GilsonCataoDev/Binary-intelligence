@@ -4,6 +4,8 @@
 
 A API NestJS usa o prefixo `/api`. `/api/health` é público e informa estado degradado enquanto fontes reais não estiverem configuradas. Todos os endpoints `/api/v1` exigem `x-api-key`, comparado em tempo constante com `API_KEY` do servidor.
 
+A chave precisa ter pelo menos 32 caracteres e não pode ser o valor de exemplo. A API aceita somente origem local nesta versão, aplica headers de segurança, limita requisições e recusa inicialização fora do modo de simulação.
+
 Endpoints implementados:
 
 - `GET /api/v1/status`, `/assets`, `/predictions`, `/news`, `/metrics`, `/paper-trades`, `/models` e `/integrations`;

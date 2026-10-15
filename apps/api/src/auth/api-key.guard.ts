@@ -10,7 +10,9 @@ export class ApiKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, [context.getHandler(), context.getClass()])) return true;
     const configured = process.env.API_KEY;
-    if (!configured) throw new ServiceUnavailableException('API_KEY is not configured');
+    if (!configured || configured.length < 32 || configured === 'replace_with_a_long_random_local_secret') {
+      throw new ServiceUnavailableException('API_KEY is not securely configured');
+    }
     const supplied = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined> }>().headers['x-api-key'];
     if (!supplied || !sameSecret(configured, supplied)) throw new UnauthorizedException('invalid API key');
     return true;

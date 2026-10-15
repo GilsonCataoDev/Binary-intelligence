@@ -7,7 +7,7 @@ export class HealthController {
   @Public()
   getHealth(): object {
     return {
-      status: 'degraded', phase: 11, api: 'ok', marketData: 'not_configured',
+      status: 'degraded', phase: 12, api: 'ok', marketData: 'not_configured',
       aiEngine: 'contract_only', execution: 'disabled',
     };
   }

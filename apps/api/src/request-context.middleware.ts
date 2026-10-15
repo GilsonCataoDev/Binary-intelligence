@@ -7,7 +7,8 @@ export class RequestContextMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
 
   use(request: Request, response: Response, next: NextFunction): void {
-    const requestId = request.header('x-request-id') ?? randomUUID();
+    const supplied = request.header('x-request-id');
+    const requestId = supplied && /^[A-Za-z0-9._-]{1,64}$/.test(supplied) ? supplied : randomUUID();
     response.setHeader('x-request-id', requestId);
     const started = Date.now();
     response.on('finish', () => this.logger.log(JSON.stringify({

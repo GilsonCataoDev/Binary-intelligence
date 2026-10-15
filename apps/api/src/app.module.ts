@@ -5,6 +5,7 @@ import { ApiKeyGuard } from './auth/api-key.guard';
 import { PlatformController } from './platform.controller';
 import { PlatformStateService } from './platform-state.service';
 import { RequestContextMiddleware } from './request-context.middleware';
+import { LocalRateLimitMiddleware } from './security/rate-limit.middleware';
 
 @Module({
   controllers: [HealthController, PlatformController],
@@ -12,6 +13,6 @@ import { RequestContextMiddleware } from './request-context.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestContextMiddleware).forRoutes('{*path}');
+    consumer.apply(RequestContextMiddleware, LocalRateLimitMiddleware).forRoutes('{*path}');
   }
 }
