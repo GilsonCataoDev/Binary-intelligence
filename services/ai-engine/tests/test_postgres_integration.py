@@ -16,6 +16,6 @@ def test_postgres_migration_created_market_candles() -> None:
     with Session(engine) as session:
         assert session.scalar(select(func.count()).select_from(CandleRecord)) == 0
     tables = set(inspect(engine).get_table_names())
-    assert {"market_candles", "backtest_runs", "backtest_predictions"} <= tables
+    assert {"market_candles", "backtest_runs", "backtest_predictions", "news_events"} <= tables
     prediction_columns = {column["name"] for column in inspect(engine).get_columns("backtest_predictions")}
     assert "analysis_price" in prediction_columns

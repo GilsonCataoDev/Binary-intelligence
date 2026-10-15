@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 6: modelos tabulares calibrados e promoção controlada.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 7: notícias e contexto econômico auditáveis.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -33,11 +33,11 @@ npm run build
 npm run start
 ```
 
-Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":6}` apenas confirma que o esqueleto da API está ativo.
+Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":7}` apenas confirma que o esqueleto da API está ativo.
 
 ## Arquitetura nesta fase
 
-`services/ai-engine` contém contratos, validação, indicadores, regimes, backtesting e modelos tabulares calibrados. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém esquemas JSON versionados. PostgreSQL mantém dados, execuções de backtest e previsões auditáveis.
+`services/ai-engine` contém contratos, validação, indicadores, regimes, backtesting, modelos calibrados e contexto de notícias. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém esquemas JSON versionados. PostgreSQL mantém dados, eventos, execuções de backtest e previsões auditáveis.
 
 O arquivo `.env.example` documenta futuras configurações; não contém credenciais ativas. Qualquer execução real permanece fora desta implementação.
 
@@ -49,7 +49,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 4. Indicadores e regimes: implementados com teste de ausência de vazamento temporal; veja `docs/MARKET_ANALYSIS.md`.
 5. Baselines e backtesting: implementados com gap temporal, payout hipotético e métricas; veja `docs/BACKTESTING.md`.
 6. Modelos tabulares e calibração: regressão logística, floresta aleatória e boosting avaliados contra o baseline; veja `docs/ML_MODELS.md`.
-7. Próxima fase: contexto de notícias e eventos econômicos, com fonte e tempo de publicação auditáveis.
+7. Notícias e eventos: contratos auditáveis, cobertura indisponível explícita e janelas de segurança; veja `docs/NEWS_CONTEXT.md`.
+8. Próxima fase: paper trading e gestão de risco independente.
 
 ## PostgreSQL local opcional
 

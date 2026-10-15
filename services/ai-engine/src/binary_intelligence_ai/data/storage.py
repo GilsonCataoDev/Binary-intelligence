@@ -6,10 +6,11 @@ import math
 from typing import Any, Mapping
 from uuid import uuid4
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, select
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from .contracts import Candle, Timeframe
+from binary_intelligence_ai.news.contracts import NewsEvent
 
 
 class Base(DeclarativeBase):
@@ -63,6 +64,25 @@ class BacktestPredictionRecord(Base):
     decision: Mapped[str] = mapped_column(String(8), nullable=False)
     market_regime: Mapped[str] = mapped_column(String(24), nullable=False)
     fold: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class NewsEventRecord(Base):
+    __tablename__ = "news_events"
+    __table_args__ = (UniqueConstraint("source", "source_event_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source: Mapped[str] = mapped_column(String(120), nullable=False)
+    source_event_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    headline: Mapped[str] = mapped_column(String(500), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    event_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    affected_assets: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    reported_impact: Mapped[str] = mapped_column(String(16), nullable=False)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    delayed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    evidence: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    raw_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class CandleRepository:
@@ -152,8 +172,59 @@ class BacktestRepository:
         return run_id
 
 
+class NewsEventRepository:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def save(self, events: list[NewsEvent] | tuple[NewsEvent, ...]) -> int:
+        inserted = 0
+        for event in events:
+            exists = self.session.scalar(select(NewsEventRecord.id).where(
+                NewsEventRecord.source == event.source,
+                NewsEventRecord.source_event_id == event.source_event_id,
+            ))
+            if exists is not None:
+                continue
+            self.session.add(NewsEventRecord(
+                source=event.source,
+                source_event_id=event.source_event_id,
+                headline=event.headline,
+                event_type=event.event_type,
+                published_at=event.published_at,
+                event_at=event.event_at,
+                affected_assets=list(event.affected_assets),
+                reported_impact=event.reported_impact.value,
+                ingested_at=event.ingested_at,
+                delayed=event.delayed,
+                evidence=list(event.evidence),
+                raw_payload=None,
+            ))
+            inserted += 1
+        self.session.commit()
+        return inserted
+
+    def list_relevant(self, *, asset: str, start: datetime, end: datetime) -> list[NewsEventRecord]:
+        records = self.session.scalars(select(NewsEventRecord).where(
+            NewsEventRecord.ingested_at <= end,
+        ).order_by(NewsEventRecord.ingested_at)).all()
+        normalized_asset = asset.strip().upper()
+        return [
+            record for record in records
+            if normalized_asset in record.affected_assets
+            and start <= _as_utc(record.event_at or record.published_at or record.ingested_at) < end
+        ]
+
+
 def _as_datetime(value: Any) -> datetime:
     converted = value.to_pydatetime() if hasattr(value, "to_pydatetime") else value
     if not isinstance(converted, datetime):
         raise TypeError("prediction timestamp must be a datetime")
     return converted
+
+
+def _as_utc(value: datetime) -> datetime:
+    """Restore UTC when a test database drops timezone metadata."""
+
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)

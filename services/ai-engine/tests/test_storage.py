@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -10,7 +10,10 @@ from binary_intelligence_ai.data.storage import (
     BacktestRunRecord,
     Base,
     CandleRepository,
+    NewsEventRecord,
+    NewsEventRepository,
 )
+from test_news import NOW, make_event
 
 from test_contracts import make_candle
 
@@ -55,3 +58,22 @@ def test_backtest_repository_preserves_report_and_predictions() -> None:
         run_id = BacktestRepository(session).save(report, [prediction])
         assert session.get(BacktestRunRecord, run_id) is not None
         assert len(list(session.scalars(select(BacktestPredictionRecord)))) == 1
+
+
+def test_news_repository_is_idempotent_and_queries_asset_window() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    event = make_event()
+
+    with Session(engine) as session:
+        repository = NewsEventRepository(session)
+        assert repository.save([event]) == 1
+        assert repository.save([event]) == 0
+        records = repository.list_relevant(
+            asset="eurusd",
+            start=NOW - timedelta(minutes=1),
+            end=NOW + timedelta(minutes=1),
+        )
+        assert len(records) == 1
+        assert records[0].source_event_id == event.source_event_id
+        assert len(list(session.scalars(select(NewsEventRecord)))) == 1
