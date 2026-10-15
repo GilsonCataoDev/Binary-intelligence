@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/data-quality-report.v1.schema.json",
+  "title": "DataQualityReportV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "checked_at", "candle_count", "issues"],
+  "properties": {
+    "status": { "enum": ["valid", "invalid", "stale"] },
+    "checked_at": { "type": "string", "format": "date-time" },
+    "candle_count": { "type": "integer", "minimum": 0 },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "enum": ["duplicate", "gap", "open_candle", "stale", "mixed_series", "out_of_order"] },
+          "message": { "type": "string", "minLength": 1 },
+          "open_time": { "type": ["string", "null"], "format": "date-time" }
+        }
+      }
+    }
+  }
+}

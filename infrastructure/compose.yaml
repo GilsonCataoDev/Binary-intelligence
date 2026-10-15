@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: binary_intelligence_ai
+      POSTGRES_USER: binary_ai
+      POSTGRES_PASSWORD: local_development_only
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - binary_ai_postgres:/var/lib/postgresql/data
+      - ./postgres/001_market_data.sql:/docker-entrypoint-initdb.d/001_market_data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U binary_ai -d binary_intelligence_ai"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  binary_ai_postgres:
