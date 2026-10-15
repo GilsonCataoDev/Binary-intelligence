@@ -33,7 +33,7 @@ npm run build
 npm run start
 ```
 
-Defina `API_KEY` conforme `.env.example`. Em outro terminal, `Invoke-RestMethod http://127.0.0.1:3000/api/health` confirma a API; os endpoints `/api/v1` exigem o cabeçalho `x-api-key`.
+Defina `API_KEY` conforme `.env.example`. Para a API consultar o motor, defina o mesmo `ENGINE_TOKEN` (32+ caracteres) na API e no motor e inicie-o com `.\.venv\Scripts\python.exe -m binary_intelligence_ai.service` em `services/ai-engine`; sem ele, a análise responde 503 e `ABSTAIN`. Em outro terminal, `Invoke-RestMethod http://127.0.0.1:3000/api/health` confirma a API; os endpoints `/api/v1` exigem o cabeçalho `x-api-key`.
 
 ## Executar o dashboard
 

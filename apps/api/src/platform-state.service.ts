@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { DerivPublicMarketService } from './market/deriv-public-market.service';
+import { EngineClientService } from './engine/engine-client.service';
 
 type BotState = 'stopped' | 'running' | 'paused' | 'emergency_stopped';
 
@@ -7,8 +8,12 @@ type BotState = 'stopped' | 'running' | 'paused' | 'emergency_stopped';
 export class PlatformStateService {
   private state: BotState = 'stopped';
   private emergencyStop = false;
+  private recentAnalyses: object[] = [];
 
-  constructor(private readonly market: DerivPublicMarketService) {}
+  constructor(
+    private readonly market: DerivPublicMarketService,
+    private readonly engine: EngineClientService,
+  ) {}
 
   async status(): Promise<object> {
     let connection = 'deriv_public_unavailable';
@@ -22,11 +27,13 @@ export class PlatformStateService {
     } catch {
       // Safe degraded state is returned when the public provider cannot be reached.
     }
+    const engine = await this.engine.health();
     return {
       mode: 'paper', state: this.state, emergencyStop: this.emergencyStop,
       liveExecutionEnabled: false, connection, dataQuality,
       marketSource: { name: 'Deriv public Options API', mode: 'transient_read_only', checkedAt },
-      model: { version: null, approved: false }, news: { availability: 'unavailable' },
+      engine: { configured: this.engine.configured, reachable: engine.reachable },
+      model: { version: engine.modelVersion, approved: false }, news: { availability: 'unavailable' },
       risk: { status: this.emergencyStop ? 'blocked' : 'ready', openExposure: 0 },
     };
   }
@@ -53,13 +60,16 @@ export class PlatformStateService {
     return this.status();
   }
 
-  unavailableAnalysis(asset: string): never {
-    throw new ServiceUnavailableException({
-      statusCode: 503,
-      error: 'Analysis unavailable',
-      asset: asset.toUpperCase(),
-      reasons: ['public transient data is not approved for model inference', 'no model has passed controlled promotion'],
-      decision: 'ABSTAIN',
-    });
+  async analyze(asset: string): Promise<object> {
+    const result = await this.engine.analyze(asset);
+    if (result.decision !== 'ABSTAIN') {
+      throw new ServiceUnavailableException({ error: 'engine returned a non-ABSTAIN decision in simulation-only release', decision: 'ABSTAIN' });
+    }
+    this.recentAnalyses = [result, ...this.recentAnalyses].slice(0, 20);
+    return result;
+  }
+
+  predictions(): object {
+    return { predictions: this.recentAnalyses, resultType: 'analysis_only', retention: 'in-memory, last 20, cleared on restart' };
   }
 }

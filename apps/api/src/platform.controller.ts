@@ -17,7 +17,7 @@ export class PlatformController {
   @Get('market/proposal/:symbol') proposal(@Param('symbol') symbol: string): Promise<object> {
     return this.market.fiveMinuteProposal(symbol);
   }
-  @Get('predictions') predictions(): object { return { predictions: [], resultType: 'paper' }; }
+  @Get('predictions') predictions(): object { return this.platform.predictions(); }
   @Get('news') news(): object { return { availability: 'unavailable', events: [], limitation: 'no authorized news feed configured' }; }
   @Get('metrics') metrics(): object { return { paper: null, backtest: null, live: null }; }
   @Get('paper-trades') trades(): object { return { trades: [], resultType: 'paper' }; }
@@ -32,7 +32,7 @@ export class PlatformController {
       pending: ['app registration', 'account and regional eligibility', 'authenticated demo tests'],
     };
   }
-  @Post('analysis/:asset') analyze(@Param('asset') asset: string): never { return this.platform.unavailableAnalysis(asset); }
+  @Post('analysis/:asset') analyze(@Param('asset') asset: string): Promise<object> { return this.platform.analyze(asset); }
   @Post('control/start') start(): Promise<object> { return this.platform.start(); }
   @Post('control/pause') pause(): Promise<object> { return this.platform.pause(); }
   @Post('control/stop') stop(): Promise<object> { return this.platform.stop(); }
