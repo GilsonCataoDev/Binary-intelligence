@@ -14,6 +14,13 @@ export class PlatformController {
   @Get('models') models(): object {
     return { active: null, candidates: ['logistic-v1', 'random-forest-v1', 'histogram-boosting-v1'], approved: [] };
   }
+  @Get('integrations') integrations(): object {
+    return {
+      candidate: 'Deriv Options', officialApiDocumented: true,
+      publicDiscoveryReady: false, demoTradingReady: false, realTradingReady: false,
+      pending: ['app registration', 'account and regional eligibility', 'contract verification', 'demo integration tests'],
+    };
+  }
   @Post('analysis/:asset') analyze(@Param('asset') asset: string): never { return this.platform.unavailableAnalysis(asset); }
   @Post('control/start') start(): object { return this.platform.start(); }
   @Post('control/pause') pause(): object { return this.platform.pause(); }

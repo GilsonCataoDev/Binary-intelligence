@@ -6,7 +6,7 @@ A API NestJS usa o prefixo `/api`. `/api/health` é público e informa estado de
 
 Endpoints implementados:
 
-- `GET /api/v1/status`, `/assets`, `/predictions`, `/news`, `/metrics`, `/paper-trades` e `/models`;
+- `GET /api/v1/status`, `/assets`, `/predictions`, `/news`, `/metrics`, `/paper-trades`, `/models` e `/integrations`;
 - `POST /api/v1/analysis/:asset`;
 - `POST /api/v1/control/start`, `/pause`, `/stop` e `/emergency-stop`.
 

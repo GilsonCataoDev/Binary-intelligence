@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://binary-intelligence-ai.local/contracts/integration-decision.v1.schema.json",
+  "title": "IntegrationDecisionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["official_api_available", "public_discovery_ready", "demo_trading_ready", "real_trading_ready", "reasons"],
+  "properties": {
+    "official_api_available": { "type": "boolean" },
+    "public_discovery_ready": { "type": "boolean" },
+    "demo_trading_ready": { "type": "boolean" },
+    "real_trading_ready": { "const": false },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}

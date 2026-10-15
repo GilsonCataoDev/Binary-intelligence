@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 10: monitoramento e resiliência.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 11: avaliação da integração oficial.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -63,7 +63,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 8. Paper trading e risco: decisão determinística, operações idempotentes e limites independentes; veja `docs/PAPER_TRADING_AND_RISK.md`.
 9. API e dashboard: endpoints autenticados, estado seguro, logs e painel local; veja `docs/API_AND_DASHBOARD.md`.
 10. Monitoramento e resiliência: holdout identificável, registro, rollback, drift, bloqueio por degradação e runbook; veja `docs/OPERATIONS_AND_MONITORING.md`.
-11. Próxima fase: integração controlada de provedores externos e execução contínua em simulação.
+11. Integração oficial: Deriv Options avaliada documentalmente, gateway simulado criado e execução real bloqueada; veja `docs/DERIV_INTEGRATION_EVALUATION.md`.
+12. Próxima fase: revisão de segurança e avaliação da viabilidade de automação real.
 
 ## PostgreSQL local opcional
 
