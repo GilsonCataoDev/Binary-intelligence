@@ -1,6 +1,6 @@
 # Binary Intelligence AI
 
-Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 5: baselines e backtesting walk-forward.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
+Projeto experimental para estudar decisões de opções binárias de 5 minutos. **Fase 6: modelos tabulares calibrados e promoção controlada.** Nenhuma fonte ao vivo, conta de corretora ou execução real está conectada. Não há evidência de rentabilidade.
 
 Leia [a pesquisa de plataformas](docs/PLATFORM_RESEARCH.md) antes de escolher uma fonte. O desenho admite Forex, cripto e B3, mas a disponibilidade e o direito de uso dos dados são avaliados por ativo.
 
@@ -19,6 +19,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m binary_intelligence_ai
 .\.venv\Scripts\python.exe -m pytest
 .\.venv\Scripts\python.exe -m binary_intelligence_ai.backtesting.demo
+.\.venv\Scripts\python.exe -m binary_intelligence_ai.models.demo
 ```
 
 Se `py -3.11` não estiver disponível, substitua por `python` após conferir `python --version`.
@@ -32,11 +33,11 @@ npm run build
 npm run start
 ```
 
-Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":5}` apenas confirma que o esqueleto da API está ativo.
+Em outro terminal: `Invoke-RestMethod http://127.0.0.1:3000/health`. A resposta `{"status":"ok","phase":6}` apenas confirma que o esqueleto da API está ativo.
 
 ## Arquitetura nesta fase
 
-`services/ai-engine` contém contratos, validação, indicadores, regimes, baselines e backtesting. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém esquemas JSON versionados. PostgreSQL mantém dados, execuções de backtest e previsões auditáveis.
+`services/ai-engine` contém contratos, validação, indicadores, regimes, backtesting e modelos tabulares calibrados. `apps/api` é o servidor HTTP em NestJS e não calcula sinais. `packages/contracts` contém esquemas JSON versionados. PostgreSQL mantém dados, execuções de backtest e previsões auditáveis.
 
 O arquivo `.env.example` documenta futuras configurações; não contém credenciais ativas. Qualquer execução real permanece fora desta implementação.
 
@@ -47,7 +48,8 @@ O arquivo `.env.example` documenta futuras configurações; não contém credenc
 3. Contratos, validação e persistência: implementados para dados CSV/simulados; veja `docs/DATA_CONTRACTS.md`.
 4. Indicadores e regimes: implementados com teste de ausência de vazamento temporal; veja `docs/MARKET_ANALYSIS.md`.
 5. Baselines e backtesting: implementados com gap temporal, payout hipotético e métricas; veja `docs/BACKTESTING.md`.
-6. Próxima fase: modelos tabulares, calibração e comparação controlada de candidatos.
+6. Modelos tabulares e calibração: regressão logística, floresta aleatória e boosting avaliados contra o baseline; veja `docs/ML_MODELS.md`.
+7. Próxima fase: contexto de notícias e eventos econômicos, com fonte e tempo de publicação auditáveis.
 
 ## PostgreSQL local opcional
 

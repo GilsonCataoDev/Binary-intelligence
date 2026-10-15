@@ -5,9 +5,6 @@ from enum import StrEnum
 import numpy as np
 import pandas as pd
 
-from binary_intelligence_ai.backtesting.labels import Outcome
-
-
 class Decision(StrEnum):
     CALL = "CALL"
     PUT = "PUT"
@@ -21,10 +18,10 @@ class FrequencyBaseline:
         self.probability_up: float | None = None
 
     def fit(self, outcomes: pd.Series) -> None:
-        resolved = outcomes[outcomes.isin([Outcome.UP.value, Outcome.DOWN.value])]
+        resolved = outcomes[outcomes.isin(["up", "down"])]
         if resolved.empty:
             raise ValueError("training fold has no resolved binary outcomes")
-        self.probability_up = float((resolved == Outcome.UP.value).mean())
+        self.probability_up = float((resolved == "up").mean())
 
     def predict(self, row_count: int, *, payout: float) -> tuple[np.ndarray, np.ndarray]:
         if self.probability_up is None:

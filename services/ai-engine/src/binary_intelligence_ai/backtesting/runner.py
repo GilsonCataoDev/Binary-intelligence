@@ -56,6 +56,33 @@ class BacktestConfig:
 
 
 def compare_baselines(candles: list[Candle] | tuple[Candle, ...], config: BacktestConfig) -> dict[str, BacktestRun]:
+    dataset = prepare_backtest_dataset(candles, config)
+    splits = list(walk_forward_splits(len(dataset), config.walk_forward))
+    if not splits:
+        raise ValueError("not enough labeled observations for walk-forward configuration")
+
+    frequency_parts: list[pd.DataFrame] = []
+    technical_parts: list[pd.DataFrame] = []
+    technical = TechnicalRuleBaseline()
+    for fold, (train_index, test_index) in enumerate(splits):
+        train = dataset.iloc[train_index]
+        test = dataset.iloc[test_index].copy()
+
+        frequency = FrequencyBaseline()
+        frequency.fit(train["outcome"])
+        probability, decision = frequency.predict(len(test), payout=config.payout)
+        frequency_parts.append(prediction_records(test, probability, decision, fold))
+
+        technical_probability, technical_decision = technical.predict(test)
+        technical_parts.append(prediction_records(test, technical_probability, technical_decision, fold))
+
+    return {
+        "frequency": build_backtest_run("frequency", pd.concat(frequency_parts), candles, config, len(splits)),
+        "technical_rule": build_backtest_run("technical_rule", pd.concat(technical_parts), candles, config, len(splits)),
+    }
+
+
+def prepare_backtest_dataset(candles: list[Candle] | tuple[Candle, ...], config: BacktestConfig) -> pd.DataFrame:
     if not candles:
         raise ValueError("backtest requires candles")
     quality = validate_candles(
@@ -77,32 +104,10 @@ def compare_baselines(candles: list[Candle] | tuple[Candle, ...], config: Backte
         ["trending_up", "trending_down"],
         default="ranging",
     )
-    splits = list(walk_forward_splits(len(dataset), config.walk_forward))
-    if not splits:
-        raise ValueError("not enough labeled observations for walk-forward configuration")
-
-    frequency_parts: list[pd.DataFrame] = []
-    technical_parts: list[pd.DataFrame] = []
-    technical = TechnicalRuleBaseline()
-    for fold, (train_index, test_index) in enumerate(splits):
-        train = dataset.iloc[train_index]
-        test = dataset.iloc[test_index].copy()
-
-        frequency = FrequencyBaseline()
-        frequency.fit(train["outcome"])
-        probability, decision = frequency.predict(len(test), payout=config.payout)
-        frequency_parts.append(_prediction_records(test, probability, decision, fold))
-
-        technical_probability, technical_decision = technical.predict(test)
-        technical_parts.append(_prediction_records(test, technical_probability, technical_decision, fold))
-
-    return {
-        "frequency": _run("frequency", pd.concat(frequency_parts), candles, config, len(splits)),
-        "technical_rule": _run("technical_rule", pd.concat(technical_parts), candles, config, len(splits)),
-    }
+    return dataset
 
 
-def _prediction_records(frame: pd.DataFrame, probability: np.ndarray, decision: np.ndarray, fold: int) -> pd.DataFrame:
+def prediction_records(frame: pd.DataFrame, probability: np.ndarray, decision: np.ndarray, fold: int) -> pd.DataFrame:
     return pd.DataFrame({
         "timestamp": frame["close_time"].to_numpy(),
         "settled_at": frame["settled_at"].to_numpy(),
@@ -119,7 +124,7 @@ def _prediction_records(frame: pd.DataFrame, probability: np.ndarray, decision: 
     })
 
 
-def _run(name: str, records: pd.DataFrame, candles: list[Candle] | tuple[Candle, ...], config: BacktestConfig, folds: int) -> BacktestRun:
+def build_backtest_run(name: str, records: pd.DataFrame, candles: list[Candle] | tuple[Candle, ...], config: BacktestConfig, folds: int) -> BacktestRun:
     records = records.reset_index(drop=True)
     metrics = evaluate_records(records, payout=config.payout, tie_policy=config.tie_policy)
     first = candles[0]
