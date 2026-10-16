@@ -5,22 +5,22 @@ type Analysis = {
   asset: string; analyzed_at: string; decision: string; reasons: string[]; data_usage: string;
   data_quality: { status: string; candle_count: number; issues: { code: string; message: string }[] };
   market_state: { regime: string; volatility: string; trend_strength: number | null; regime_changed: boolean } | null;
-  input?: { candlesReceived: number; openCandlesDiscarded: number };
+  input?: { candlesReceived: number; openCandlesDiscarded: number; source?: string };
 };
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:3000/api';
 const SYMBOL = /^[A-Za-z0-9_.-]{1,40}$/;
 
 export function App() {
-  const [key, setKey] = useState(() => sessionStorage.getItem('binary-ai-key') ?? '');
+  const [key, setKey] = useState(() => sessionStorage.getItem('market-intelligence-key') ?? '');
   const [status, setStatus] = useState<Status | null>(null);
-  const [asset, setAsset] = useState('frxEURUSD');
+  const [asset, setAsset] = useState('BTCUSDT');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [history, setHistory] = useState<Analysis[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('Informe a chave local para consultar a API.');
 
   async function api<T>(path: string, method = 'GET'): Promise<T> {
-    sessionStorage.setItem('binary-ai-key', key);
+    sessionStorage.setItem('market-intelligence-key', key);
     const response = await fetch(`${API}${path}`, { method, headers: { 'x-api-key': key } });
     const body = await response.json();
     if (!response.ok) {
@@ -54,16 +54,16 @@ export function App() {
   const engineLabel = !status?.engine ? 'não verificado' : !status.engine.configured ? 'não configurado' : status.engine.reachable ? 'conectado' : 'inacessível';
 
   return <main>
-    <header><div><p className="eyebrow">AMBIENTE EXPERIMENTAL</p><h1>Binary Intelligence</h1><p>Paper trading • horizonte de 5 minutos</p></div><span className={`pill ${status?.state ?? 'offline'}`}>{status?.state ?? 'desconectado'}</span></header>
+    <header><div><p className="eyebrow">AMBIENTE DE PESQUISA</p><h1>Market Intelligence Lab</h1><p>Forex, ouro e cripto • paper trading • horizonte de 5 minutos</p></div><span className={`pill ${status?.state ?? 'offline'}`}>{status?.state ?? 'desconectado'}</span></header>
     <section className="access"><label>Chave local<input type="password" value={key} onChange={e => setKey(e.target.value)} placeholder="API_KEY" /></label><button onClick={() => void refresh()}>Conectar</button><span>{message}</span></section>
-    <section className="access"><label>Ativo (símbolo Deriv)<input value={asset} onChange={e => setAsset(e.target.value)} maxLength={40} /></label><button onClick={() => void analyze()} disabled={busy}>{busy ? 'Analisando…' : 'Analisar'}</button><span>Dados públicos transitórios; a análise não gera ordem.</span></section>
+    <section className="access"><label>Ativo (BTCUSDT ou XAUUSD)<input value={asset} onChange={e => setAsset(e.target.value)} maxLength={40} /></label><button onClick={() => void analyze()} disabled={busy}>{busy ? 'Analisando…' : 'Analisar'}</button><span>Dados de referência; a análise não gera ordem.</span></section>
     <section className="grid">
       <article><h2>Decisão atual</h2><strong>{analysis ? (analysis.decision === 'ABSTAIN' ? 'ABSTER-SE' : analysis.decision) : 'ABSTER-SE'}</strong>
         {analysis ? <ul className="reasons">{analysis.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul> : <p>Nenhuma análise executada nesta sessão.</p>}</article>
       <article><h2>Mercado {analysis ? `• ${analysis.asset}` : ''}</h2><strong>{analysis?.market_state?.regime ?? 'sem análise'}</strong>
         <p>Volatilidade: {analysis?.market_state?.volatility ?? '—'}<br />ADX: {analysis?.market_state?.trend_strength?.toFixed(1) ?? '—'}{analysis?.market_state?.regime_changed ? ' • regime mudou' : ''}</p></article>
       <article><h2>Qualidade dos dados</h2><strong>{analysis?.data_quality.status ?? status?.dataQuality ?? 'indisponível'}</strong>
-        <p>{analysis ? `${analysis.data_quality.candle_count} candles fechados${analysis.input ? `, ${analysis.input.openCandlesDiscarded} em formação descartado(s)` : ''}${analysis.data_quality.issues.length ? ` • ${analysis.data_quality.issues.map(i => i.code).join(', ')}` : ''}` : `Conexão: ${status?.connection ?? 'não verificada'}`}</p></article>
+        <p>{analysis ? `${analysis.data_quality.candle_count} candles fechados${analysis.input ? `, ${analysis.input.openCandlesDiscarded} em formação descartado(s)` : ''}${analysis.data_quality.issues.length ? ` • ${analysis.data_quality.issues.map(i => i.code).join(', ')}` : ''}${analysis.input?.source ? ` • ${analysis.input.source}` : ''}` : `Conexão: ${status?.connection ?? 'não verificada'}`}</p></article>
       <article><h2>Motor de IA</h2><strong>{engineLabel}</strong><p>Modelo: {status?.model.version ?? 'nenhum ativo'} • aprovado: {status?.model.approved ? 'sim' : 'não'}</p></article>
       <article><h2>Risco</h2><strong>{status?.risk.status ?? 'sem estado'}</strong><p>Exposição aberta: {status?.risk.openExposure ?? 0} unidade</p></article>
       <article><h2>Notícias</h2><strong>{status?.news.availability ?? 'indisponível'}</strong><p>Eventos não são presumidos quando não há cobertura.</p></article>
@@ -75,6 +75,6 @@ export function App() {
       </tbody></table> : <p className="muted">Nenhuma análise registrada desde o último reinício da API.</p>}
     </section>
     <section className="controls"><h2>Controle da simulação</h2><div><button onClick={() => action('start')}>Iniciar</button><button className="secondary" onClick={() => action('pause')}>Pausar</button><button className="secondary" onClick={() => action('stop')}>Parar</button><button className="danger" onClick={() => confirm('Ativar parada de emergência?') && action('emergency-stop')}>PARADA DE EMERGÊNCIA</button></div></section>
-    <footer>Nenhum resultado exibido representa promessa de rentabilidade.</footer>
+    <footer>O painel não envia ordens. Nenhum resultado representa promessa de rentabilidade.</footer>
   </main>;
 }

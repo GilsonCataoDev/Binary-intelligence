@@ -1,5 +1,5 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { DerivPublicMarketService } from './market/deriv-public-market.service';
+import { ForexCryptoMarketService } from './market/forex-crypto-market.service';
 import { EngineClientService } from './engine/engine-client.service';
 
 type BotState = 'stopped' | 'running' | 'paused' | 'emergency_stopped';
@@ -11,18 +11,18 @@ export class PlatformStateService {
   private recentAnalyses: object[] = [];
 
   constructor(
-    private readonly market: DerivPublicMarketService,
+    private readonly market: ForexCryptoMarketService,
     private readonly engine: EngineClientService,
   ) {}
 
   async status(): Promise<object> {
-    let connection = 'deriv_public_unavailable';
+    let connection = 'binance_public_unavailable';
     let dataQuality = 'unavailable';
     let checkedAt: string | null = null;
     try {
       const probe = await this.market.probe();
-      connection = 'deriv_public_connected';
-      dataQuality = 'transient_unvalidated';
+      connection = 'binance_public_connected';
+      dataQuality = 'provider_not_yet_validated';
       checkedAt = probe.checkedAt;
     } catch {
       // Safe degraded state is returned when the public provider cannot be reached.
@@ -31,7 +31,7 @@ export class PlatformStateService {
     return {
       mode: 'paper', state: this.state, emergencyStop: this.emergencyStop,
       liveExecutionEnabled: false, connection, dataQuality,
-      marketSource: { name: 'Deriv public Options API', mode: 'transient_read_only', checkedAt },
+      marketSource: { name: 'Binance Spot public + Twelve Data reference feed', mode: 'research_read_only', checkedAt },
       engine: { configured: this.engine.configured, reachable: engine.reachable },
       model: { version: engine.modelVersion, approved: false }, news: { availability: 'unavailable' },
       risk: { status: this.emergencyStop ? 'blocked' : 'ready', openExposure: 0 },

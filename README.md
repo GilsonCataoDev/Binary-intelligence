@@ -1,157 +1,119 @@
-# Binary Intelligence AI
+# Market Intelligence Lab
 
-**Uma IA consegue prever opções binárias de curto prazo? Este projeto testou essa hipótese com rigor de engenharia e dados reais. A resposta foi não, e o repositório mostra como chegar a essa conclusão sem se enganar.**
+Plataforma local de pesquisa quantitativa para **BTC/USDT** e **XAU/USD (ouro)**. O projeto recebe candles de fontes documentadas, valida qualidade, calcula indicadores e regimes, permite backtests com custos explícitos e mantém qualquer execução real bloqueada.
 
-Plataforma completa de pesquisa quantitativa: motor de machine learning em Python, backtesting walk-forward sem vazamento temporal, API NestJS, painel React, PostgreSQL e um teste de viabilidade com dados públicos reais da Deriv. A execução de ordens reais é bloqueada por código.
+> Projeto educacional e de portfólio. Não envia ordens, não recomenda operações e não promete rentabilidade.
 
-> **English summary.** A full-stack quantitative research platform (Python ML engine, walk-forward backtesting, NestJS API, React dashboard, PostgreSQL) built to test whether ML can predict short-term binary options. Using 60 days of real public market data, calibrated models (logistic regression, random forest, gradient boosting) scored ~50% accuracy against a 53–57% break-even, across horizons from 15 min to 4 h, news filters, rolling retraining and confidence thresholds. A synthetic random index served as a negative control. Conclusion: no exploitable edge; real trading stays disabled by design.
+## Escopo atual
 
-> Projeto de estudo. Não é recomendação de investimento.
+| Ativo | Fonte | Uso | Limite importante |
+|---|---|---|---|
+| `BTCUSDT` | Binance Spot, leitura pública | Candles M5 para análise local | É o preço BTC/USDT daquela exchange, não um preço consolidado nem uma cotação de execução. |
+| `XAUUSD` | Twelve Data, com chave de API | Candles M5 de referência | A cotação não inclui spread, financiamento ou a execução da corretora escolhida. |
 
-## Resultado em 30 segundos
+O painel aceita somente `BTCUSDT` ou `XAUUSD`. A análise permanece `ABSTAIN` até existir evidência auditável de um modelo aprovado. O módulo direcional novo calcula retorno **líquido de custos informados**, mas serve apenas para backtest e paper trading.
 
-Para lucrar com payout de 76% a 96%, é preciso acertar entre **51% e 57%** das operações. Previsões sempre fora da amostra:
+## O que mudou
 
-| Teste | Previsões avaliadas | Acerto necessário | Melhor acerto | Resultado |
-|---|---|---|---|---|
-| Controle: índice sintético aleatório `R_100`, 5 min | 38.190 | 51,0% | 50,5% | todos negativos (como esperado) |
-| EUR/USD, 15 min, **4 dias** | 374 | 54,9% | **62,8%** | parecia vantagem... |
-| EUR/USD, 15 min, **60 dias** | 55.616 | 53,5% | 51,8% | ...que desapareceu |
-| EUR/USD, 30 min / 60 min / 4 h, sem horários de notícia | 16–38 mil | 55–57% | 48–49% | todos negativos |
-| EUR/USD, 15 min, retreino só com os últimos 5 dias | 40.959 | 56,8% | 50,6% | todos negativos |
-| Somente entradas de alta confiança | centenas a milhares | 55–57% | 54,4% | nenhuma acima do break-even |
-
-Principais aprendizados:
-
-- **Amostra pequena engana.** 62,8% de acerto em 4 dias virou 51,8% em 60 dias.
-- **O controle negativo funciona.** No índice sintético, que é aleatório por construção, o procedimento não gerou falso positivo. Então o "não" para o EUR/USD é confiável.
-- **Mais IA não cria sinal.** Retreino contínuo, filtro de notícias, prazos longos e seleção por confiança não mudaram o resultado. Nos prazos de 30 e 60 min, as entradas mais confiantes acertaram *menos* (38–43%).
-- **A premissa do produto não existia.** A Deriv não oferece EUR/USD de 5 minutos; o prazo mínimo é 15 minutos.
-
-Detalhes e limitações: [docs/VIABILITY_TEST.md](docs/VIABILITY_TEST.md).
-
-## O que este projeto demonstra
-
-**Validação estatística honesta**
-- Features calculadas só com candles fechados, com teste automatizado de ausência de vazamento temporal.
-- Walk-forward com *gap* igual ao horizonte; calibração de Platt em período separado; holdout identificado por SHA-256.
-- Critérios de promoção versionados: ≥300 observações, melhora de Brier, log loss, erro de calibração ≤ 0,08, vitória em ≥60% dos folds e intervalo de confiança do acerto acima do break-even.
-- Controle negativo, alerta de múltiplos testes e sobreposição de rótulos documentados.
-
-**Segurança por padrão**
-- Decisão padrão `ABSTAIN`; a API rejeita qualquer resposta do motor que não seja abstenção.
-- Execução real bloqueada em código e na inicialização (`EXECUTION_MODE`, `REAL_EXECUTION_ENABLED`).
-- API e motor só no loopback, chaves de 32+ caracteres comparadas em tempo constante, Helmet, CORS restrito, rate limit e limites de payload.
-- Parada de emergência travada, risco independente do modelo e paper trading idempotente.
-
-**Respeito a direitos de dados**
-- Os termos da Deriv limitam o cache a 24 h, então o teste de viabilidade processa tudo **em memória** e só emite métricas agregadas.
-- O filtro de notícias usa horários de divulgação conhecidos de antemão, e não volatilidade observada, que seria informação futura.
+- A interface e a API agora trabalham com BTC/USDT e XAU/USD em vez de contratos binários.
+- BTC/USDT vem do endpoint público de candles da Binance; ouro usa Twelve Data quando `TWELVE_DATA_API_KEY` estiver configurada.
+- Foi incluído um baseline direcional EMA para `long`, `short` e `flat`, com spread, slippage, comissão e financiamento declarados em pontos-base.
+- A execução real segue bloqueada por configuração e por código.
+- A pesquisa anterior de opções binárias continua no histórico do Git como estudo de viabilidade negativa; ela não é base para sinais de Forex ou cripto.
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    D[Deriv API pública<br/>WebSocket, somente leitura] -->|candles M5| A[API NestJS<br/>auth, rate limit, CORS]
-    UI[Painel React/Vite] <-->|x-api-key| A
-    A -->|candles fechados<br/>x-engine-token| E[Motor Python<br/>qualidade, indicadores, regime]
-    E -->|ABSTAIN + motivos| A
-    E --- DB[(PostgreSQL<br/>backtests, paper trading,<br/>monitoramento)]
-    R[research/viability] -->|histórico M1 em memória| D
-    R --> M[walk-forward + modelos calibrados] --> O[métricas agregadas]
+  B[Binance Spot público<br/>BTC/USDT M5] --> A[API NestJS local]
+  T[Twelve Data<br/>XAU/USD M5] --> A
+  UI[Painel React] <-->|chave local| A
+  A -->|candles fechados| E[Motor Python]
+  E -->|regime e ABSTAIN| A
+  E --> R[Backtest direcional<br/>custos explícitos]
+  R --> P[Paper trading apenas]
 ```
 
-| Camada | Tecnologia |
-|---|---|
-| Motor quantitativo | Python 3.11, pandas, NumPy, scikit-learn, Pydantic, SQLAlchemy |
-| API | NestJS 11, TypeScript, Helmet, `ws` |
-| Painel | React 19, Vite 7 |
-| Dados | PostgreSQL 17 (Docker Compose), esquemas JSON versionados |
-| Testes | pytest (87 testes), validação de esquemas, teste integrado com PostgreSQL |
+## Dados e custos
 
-## Estrutura
+A fonte de dados e o lugar onde alguém executaria uma ordem podem divergir. Por isso o sistema nunca chama um candle de preço de execução. Para cada backtest direcional, informe custos de ida e volta:
 
-```
-services/ai-engine/   motor Python: dados, features, regimes, modelos, backtesting,
-                      risco, paper trading, monitoramento, serviço HTTP e pesquisa
-apps/api/             API NestJS (controle, consultas, ponte com motor e Deriv)
-apps/dashboard/       painel React
-packages/contracts/   esquemas JSON versionados entre os serviços
-infrastructure/       Docker Compose e migrações PostgreSQL
-docs/                 decisões, metodologia e resultados de cada fase
-```
+- `spread_bps`
+- `slippage_bps`
+- `commission_bps`
+- `financing_bps`
 
-## Como rodar
+Sem custos fornecidos, os valores são zero por segurança de interpretação: isso significa **não informado**, não “sem custo”. O resultado não pode ser usado para estimar lucro real até que o histórico de custos da conta e do instrumento esteja disponível.
 
-Requisitos: Python 3.11+, Node.js 20+ e npm. Comandos para PowerShell no Windows.
+Detalhes e fontes: [FOREX_CRYPTO_RESEARCH.md](docs/FOREX_CRYPTO_RESEARCH.md).
 
-**Motor e testes**
+## Rodar no Windows PowerShell
+
+Requisitos: Python 3.11+, Node.js 20+ e npm.
+
+### Motor e testes
 
 ```powershell
 cd services/ai-engine
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev,research]"
 .\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m binary_intelligence_ai.models.demo
 ```
 
-Se `py -3.11` não estiver disponível, use `python` após conferir `python --version`.
+### Painel local
 
-**Teste de viabilidade com dados reais (em memória)**
+Gere uma vez dois segredos longos no PowerShell e mantenha os mesmos valores nos terminais:
 
 ```powershell
-.\.venv\Scripts\python.exe -m binary_intelligence_ai.research.viability --symbol frxEURUSD --horizons 15,60 --days 60 --exclude-news
+$env:API_KEY = -join ((1..48) | ForEach-Object { [char](Get-Random -Minimum 65 -Maximum 91) })
+$env:ENGINE_TOKEN = -join ((1..48) | ForEach-Object { [char](Get-Random -Minimum 65 -Maximum 91) })
 ```
 
-**Plataforma completa (motor + API + painel)**
-
-São três terminais com o mesmo `API_KEY` e `ENGINE_TOKEN` (32+ caracteres aleatórios). O passo a passo está em [docs/API_AND_DASHBOARD.md](docs/API_AND_DASHBOARD.md). Com tudo no ar, abra `http://127.0.0.1:5173`, informe a chave e analise um símbolo como `frxEURUSD`.
-
-**PostgreSQL opcional**
+Para analisar ouro, acrescente uma chave da Twelve Data somente no terminal da API:
 
 ```powershell
-cd infrastructure
-docker compose up -d
+$env:TWELVE_DATA_API_KEY = 'sua-chave-da-twelve-data'
 ```
 
-As migrações de `postgres/` são aplicadas na primeira criação do volume. Os testes unitários não exigem Docker; o teste integrado exige a URL do PostgreSQL.
+Terminal 1:
+
+```powershell
+cd services/ai-engine
+.\.venv\Scripts\python.exe -m binary_intelligence_ai.service
+```
+
+Terminal 2:
+
+```powershell
+cd apps/api
+npm ci
+npm run build
+npm run start
+```
+
+Terminal 3:
+
+```powershell
+cd apps/dashboard
+npm ci
+npm run dev
+```
+
+Abra `http://127.0.0.1:5173`, informe a chave local e escolha `BTCUSDT` ou `XAUUSD`.
 
 ## Documentação
 
 | Documento | Conteúdo |
 |---|---|
-| [VIABILITY_TEST.md](docs/VIABILITY_TEST.md) | Teste com dados reais, resultados e limitações |
-| [PLATFORM_RESEARCH.md](docs/PLATFORM_RESEARCH.md) | Pesquisa de corretoras e provedores de dados |
-| [DATA_CONTRACTS.md](docs/DATA_CONTRACTS.md) | Contratos, validação de qualidade e persistência |
-| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Indicadores e classificação de regimes |
-| [BACKTESTING.md](docs/BACKTESTING.md) | Walk-forward, rótulos de liquidação e métricas |
-| [ML_MODELS.md](docs/ML_MODELS.md) | Modelos, calibração e critérios de promoção |
-| [NEWS_CONTEXT.md](docs/NEWS_CONTEXT.md) | Contexto de notícias e janelas de bloqueio |
-| [PAPER_TRADING_AND_RISK.md](docs/PAPER_TRADING_AND_RISK.md) | Decisão determinística e controles de risco |
-| [API_AND_DASHBOARD.md](docs/API_AND_DASHBOARD.md) | Endpoints, painel e execução local |
-| [OPERATIONS_AND_MONITORING.md](docs/OPERATIONS_AND_MONITORING.md) | Registro de modelos, drift, rollback e runbook |
-| [DERIV_INTEGRATION_EVALUATION.md](docs/DERIV_INTEGRATION_EVALUATION.md) | Avaliação da integração oficial |
-| [SECURITY_AND_AUTOMATION_REVIEW.md](docs/SECURITY_AND_AUTOMATION_REVIEW.md) | Revisão de segurança e decisão GO/NO-GO |
+| [FOREX_CRYPTO_RESEARCH.md](docs/FOREX_CRYPTO_RESEARCH.md) | Fontes de dados, limites e modelo de custos para ouro e BTC |
+| [DATA_CONTRACTS.md](docs/DATA_CONTRACTS.md) | Candles, qualidade e persistência |
+| [MARKET_ANALYSIS.md](docs/MARKET_ANALYSIS.md) | Indicadores e regimes sem vazamento temporal |
+| [BACKTESTING.md](docs/BACKTESTING.md) | Walk-forward e limites do backtest binário histórico |
+| [SECURITY_AND_AUTOMATION_REVIEW.md](docs/SECURITY_AND_AUTOMATION_REVIEW.md) | Execução real bloqueada |
 
-## Roteiro
+## Limites atuais
 
-1. Pesquisa de plataformas e direitos de dados
-2. Estrutura e ambientes
-3. Contratos, validação e persistência
-4. Indicadores e regimes sem vazamento temporal
-5. Baselines e backtesting walk-forward
-6. Modelos tabulares calibrados
-7. Contexto de notícias auditável
-8. Paper trading e risco independente
-9. API autenticada e painel
-10. Monitoramento, holdout e rollback
-11. Avaliação da integração oficial (execução real bloqueada)
-12. Revisão de segurança: automação real **NO-GO**
-13. Teste de viabilidade com dados reais: **sem vantagem estatística**
-
-## Limitações
-
-- A liquidação é aproximada pelo fechamento de candles M1, não pelos ticks exatos do contrato.
-- O payout usado é uma fotografia da cotação; ele varia ao longo do dia.
-- Só o conjunto de features técnicas `technical-v1` foi testado; outra abordagem exige a mesma avaliação, com holdout intocado.
-- O estado da API fica em memória e não há reconciliação contínua com o PostgreSQL.
+- Não há corretora conectada, conta real, adaptador de execução, alavancagem nem envio de ordens.
+- Não existe modelo promovido nem evidência de vantagem estatística para BTC ou ouro.
+- A análise usa candles fechados e sempre devolve `ABSTAIN` nesta versão.
+- Ouro exige uma chave da Twelve Data; sem ela, a API explica a indisponibilidade em vez de usar dados inventados.

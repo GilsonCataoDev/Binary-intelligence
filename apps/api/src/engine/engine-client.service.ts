@@ -1,5 +1,5 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { DerivPublicMarketService } from '../market/deriv-public-market.service';
+import { ForexCryptoMarketService } from '../market/forex-crypto-market.service';
 
 export type EngineConfiguration = { url: string; token: string };
 type JsonObject = Record<string, unknown>;
@@ -25,7 +25,7 @@ export class EngineClientService {
   private readonly logger = new Logger(EngineClientService.name);
   private readonly configuration = loadEngineConfiguration();
 
-  constructor(private readonly market: DerivPublicMarketService) {}
+  constructor(private readonly market: ForexCryptoMarketService) {}
 
   get configured(): boolean {
     return this.configuration !== null;
@@ -51,13 +51,13 @@ export class EngineClientService {
         reasons: ['AI engine is not configured (ENGINE_TOKEN missing)'],
       });
     }
-    const market = (await this.market.candles(symbol)) as JsonObject;
+    const market = await this.market.candles(symbol);
     const nowSeconds = Math.floor(Date.now() / 1000);
-    const raw = Array.isArray(market.candles) ? (market.candles as JsonObject[]) : [];
+    const raw = market.candles;
     const closed = raw.filter((candle) => Number(candle.epoch) + GRANULARITY_SECONDS <= nowSeconds);
 
     const payload = {
-      asset: String(market.symbol), timeframe: '5m', source: 'deriv_public', data_usage: 'transient_unvalidated',
+      asset: market.symbol, timeframe: '5m', source: market.source, data_usage: market.dataUsage,
       candles: closed.map((candle) => ({
         open_time: new Date(Number(candle.epoch) * 1000).toISOString(),
         open: String(candle.open), high: String(candle.high), low: String(candle.low), close: String(candle.close),
@@ -80,6 +80,6 @@ export class EngineClientService {
       this.logger.warn(`engine rejected analysis with HTTP ${response.status}`);
       throw new ServiceUnavailableException({ error: 'AI engine rejected the analysis', decision: 'ABSTAIN', status: response.status });
     }
-    return { ...body, input: { candlesReceived: raw.length, openCandlesDiscarded: raw.length - closed.length } };
+    return { ...body, input: { candlesReceived: raw.length, openCandlesDiscarded: raw.length - closed.length, source: market.source } };
   }
 }

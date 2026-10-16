@@ -1,21 +1,18 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
 import { PlatformStateService } from './platform-state.service';
-import { DerivPublicMarketService } from './market/deriv-public-market.service';
+import { ForexCryptoMarketService } from './market/forex-crypto-market.service';
 
 @Controller('v1')
 export class PlatformController {
   constructor(
     private readonly platform: PlatformStateService,
-    private readonly market: DerivPublicMarketService,
+    private readonly market: ForexCryptoMarketService,
   ) {}
 
   @Get('status') status(): Promise<object> { return this.platform.status(); }
-  @Get('assets') assets(): Promise<object> { return this.market.listAssets(); }
+  @Get('assets') assets(): object { return this.market.listAssets(); }
   @Get('market/candles/:symbol') candles(@Param('symbol') symbol: string): Promise<object> {
     return this.market.candles(symbol);
-  }
-  @Get('market/proposal/:symbol') proposal(@Param('symbol') symbol: string): Promise<object> {
-    return this.market.fiveMinuteProposal(symbol);
   }
   @Get('predictions') predictions(): object { return this.platform.predictions(); }
   @Get('news') news(): object { return { availability: 'unavailable', events: [], limitation: 'no authorized news feed configured' }; }
@@ -26,10 +23,10 @@ export class PlatformController {
   }
   @Get('integrations') integrations(): object {
     return {
-      candidate: 'Deriv Options', officialApiDocumented: true,
+      candidate: 'Research-only market-data adapters', officialApiDocumented: true,
       publicDiscoveryReady: true, demoTradingReady: false, realTradingReady: false,
-      dataMode: 'transient_read_only',
-      pending: ['app registration', 'account and regional eligibility', 'authenticated demo tests'],
+      dataMode: 'read_only_reference_feeds',
+      pending: ['venue selection', 'account-specific spread and commission history', 'paper-trading validation'],
     };
   }
   @Post('analysis/:asset') analyze(@Param('asset') asset: string): Promise<object> { return this.platform.analyze(asset); }

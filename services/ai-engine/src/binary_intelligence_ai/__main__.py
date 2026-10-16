@@ -2,7 +2,7 @@ from binary_intelligence_ai import __version__
 
 
 def main() -> None:
-    print(f"Binary Intelligence AI engine {__version__}: revisão concluída, automação real reprovada (fase 12)")
+    print(f"Market Intelligence engine {__version__}: pesquisa local, execução real bloqueada")
 
 
 if __name__ == "__main__":
