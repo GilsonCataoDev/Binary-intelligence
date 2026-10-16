@@ -58,7 +58,7 @@ export class ForexCryptoMarketService {
       }
       return { epoch: Math.floor(Number(row[0]) / 1_000), open: String(row[1]), high: String(row[2]), low: String(row[3]), close: String(row[4]), volume: String(row[5]) };
     });
-    return { source: 'binance_spot_public', symbol: 'BTCUSDT', granularitySeconds: 300, fetchedAt: new Date().toISOString(), candles, dataUsage: 'public_read_only_reference_feed' };
+    return { source: 'binance_spot_public', symbol: 'BTCUSDT', granularitySeconds: 300, fetchedAt: new Date().toISOString(), candles, dataUsage: 'research_reference_feed' };
   }
 
   private async goldCandles(): Promise<{ source: string; symbol: Asset; granularitySeconds: number; fetchedAt: string; candles: MarketCandle[]; dataUsage: string }> {
@@ -79,7 +79,7 @@ export class ForexCryptoMarketService {
       if (!Number.isFinite(epoch)) throw new ServiceUnavailableException('Twelve Data returned an invalid candle timestamp');
       return { epoch, open: String(row.open), high: String(row.high), low: String(row.low), close: String(row.close), volume: row.volume == null ? null : String(row.volume) };
     }).sort((left, right) => left.epoch - right.epoch);
-    return { source: 'twelve_data_forex', symbol: 'XAUUSD', granularitySeconds: 300, fetchedAt: new Date().toISOString(), candles, dataUsage: 'licensed_reference_feed' };
+    return { source: 'twelve_data_forex', symbol: 'XAUUSD', granularitySeconds: 300, fetchedAt: new Date().toISOString(), candles, dataUsage: 'research_reference_feed' };
   }
 
   private asset(value: string): Asset {

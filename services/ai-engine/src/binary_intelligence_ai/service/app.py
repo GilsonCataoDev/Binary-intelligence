@@ -69,7 +69,7 @@ class AnalysisRequest(BaseModel):
     asset: str = Field(pattern=r"^[A-Za-z0-9_.-]{1,40}$")
     timeframe: Timeframe
     source: str = Field(min_length=1, max_length=80)
-    data_usage: str = Field(pattern=r"^(transient_unvalidated|authorized_historical)$")
+    data_usage: str = Field(pattern=r"^(transient_unvalidated|research_reference_feed|authorized_historical)$")
     candles: tuple[CandleInput, ...] = Field(max_length=MAX_CANDLES)
 
     @field_validator("asset")
@@ -118,8 +118,10 @@ def analyze_request(
         reasons.append(f"data quality is {analysis.quality.status.value}")
     if analysis.market_state is not None and analysis.should_abstain:
         reasons.extend(analysis.market_state.reasons)
-    if request.data_usage != "authorized_historical":
+    if request.data_usage == "transient_unvalidated":
         reasons.append("transient public data is not approved for model inference")
+    elif request.data_usage == "research_reference_feed":
+        reasons.append("reference feed is not approved for model inference")
     active = registry.active
     if active is None:
         reasons.append("no model has passed controlled promotion")
